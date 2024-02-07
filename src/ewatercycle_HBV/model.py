@@ -19,8 +19,8 @@ class HBVMethods(eWaterCycleModel):
     parameter_set: None  # The model has no parameter set.
 
     _config: dict = {
-        "forcing_file": "",
-        "timestep": 0,
+        "precipitation_file": "",
+        "potential_evaporation_file": "",
         "parameters": "",
         "initial_storage": "",
     }
