@@ -3,16 +3,16 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.version]
-path = "src/ewatercycle_leakybucket/__init__.py"
+path = "src/ewatercycle_HBV/__init__.py"
 
 [project]
-name = "ewatercycle-leakybucket"
-description = "Template project for starting a new eWaterCycle plugin"
+name = "ewatercycle-HBV"
+description = "Implementation of HBV for eWaterCycle"
 readme = "README.md"
 license = "Apache-2.0"
 version = "0.0.1"
 authors = [
-  { name = "Bart Schilperoort, Peter Kalverla, Stefan Verhoeven", email = "b.schilperoort@esciencecenter.nl" },
+  { name = "David Haasnoot", email = "davidhaasnoot@gmail.com" },
 ]
 keywords = ["ewatercycle", "hydrology"]
 classifiers = [
@@ -31,4 +31,4 @@ dependencies = [
 
 # This registers the plugin such that it is discoverable by eWaterCycle
 [project.entry-points."ewatercycle.models"]
-LeakyBucket = "ewatercycle_leakybucket.model:LeakyBucket"
+HBV = "ewatercycle_HBV.model:HBV"
