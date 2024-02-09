@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from ewatercycle.base.forcing import GenericLumpedForcing # or later Use custom forcing instead?
-# from ewatercycle.base.forcing import DefaultForcing # Use custom forcing instead
+from ewatercycle-HBV.forcing import HBVForcing # Use custom forcing instead
 from ewatercycle.base.model import ContainerizedModel, eWaterCycleModel
 from ewatercycle.container import ContainerImage
 
@@ -18,7 +18,7 @@ class HBVMethods(eWaterCycleModel):
     
 
     """
-    forcing: GenericLumpedForcing  # The model requires forcing.
+    forcing: HBVForcing  # The model requires forcing.
     parameter_set: None  # The model has no parameter set.
 
     _config: dict = {
@@ -32,6 +32,10 @@ class HBVMethods(eWaterCycleModel):
         """Write model configuration file."""
         self._config["precipitation_file"] = str(
             self.forcing.directory / self.forcing.pr
+        )
+
+        self._config["potential_evaporation_file"] = str(
+            self.forcing.directory / self.forcing.pev
         )
         ## possibly add later for snow?
         # self._config["temperature_file"] = str(
