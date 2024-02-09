@@ -115,7 +115,7 @@ class HBVForcing(DefaultForcing):
         ds_name = f"HBV_forcing_{time}.nc"
         out_dir = self.directory / ds_name
         if not out_dir.exists():
-            ds.to_netcdf()
+            ds.to_netcdf(out_dir)
         self.pr = ds_name  # these are appended in model.py
         self.pev = ds_name # these are appended in model.py
         return ds
