@@ -24,11 +24,18 @@ class HBVForcing(DefaultForcing):
         end_time: End time of forcing in UTC and ISO format string e.g.
             'YYYY-MM-DDTHH:MM:SSZ'.
         shape: Path to a shape file. Used for spatial selection.
+
+        -------------------------
+        --> Either supply a forcing file: (sadly still often used by hydroligists)
         forcing_file: .txt file that contains forcings for HBV model including precipitation and evaporation
                     contains columns: ["year", "month", "day", "pr", "pev"] seperated by a space
+        Use this with .to_xarray() to generate the files
+        -------------------------
+
+        --> or directly supply the netcdf dataset file
         precipitation_file: xarray containing precipition
         potential_evaporation_file: xarray containing potential evaporation, same format as above
-        # TODO add beter desription of type
+
     Examples:
 
         From existing forcing data:
@@ -39,16 +46,29 @@ class HBVForcing(DefaultForcing):
 
             forcing = sources.HBVForcing(
                 directory='/home/davidhaasnoot/Code/Forcing/',
-                start_time='1989-01-02T00:00:00Z',
-                end_time='1999-01-02T00:00:00Z',
+                start_time='1997-08-01T00:00:00Z',
+                end_time='2000-08-31T00:00:00Z',
                 forcing_file='forcing.txt',
-                precipitation_file="precipitation_file.nc"
-                precipitation_file="precipitation.nc"
             )
+
+            # ---------------- or --------------------
+            forcing = sources.HBVForcing(
+                directory='/home/davidhaasnoot/Code/Forcing/',
+                start_time='1997-08-01T00:00:00Z',
+                end_time='2000-08-31T00:00:00Z',
+                precipitation_file="precipitation_file.nc"
+                potential_evaporation_file="potential_evaporation_file.nc"
+            )
+            # where precipitation_file & potential_evaporation_file can be the same aslong as
+            # they contain a 'pr' & 'pev' value
+
     """
 
-
+    # either a forcing file is supplied
     forcing_file: Optional[str] = "forcing.txt"
+    # or pr and pev are supplied seperately - can also be the same dataset
+    pr: Optional[str] = "forcing.nc"
+    pev: Optional[str] = "forcing.nc"
 
     # @classmethod
     # def _build_recipe(
@@ -69,7 +89,9 @@ class HBVForcing(DefaultForcing):
     # TODO Implement this to take .txt and add them?
     def to_xarray(self) -> xr.Dataset:
         """Load forcing data from a txt file into an xarray dataset.
-
+        Must contain ["year", "month", "day", "pr","Q", "pev"] in columns
+        Will convert date to pandas.Timestamp()
+        pr (precipitation), Q (discharge), pev (potential evaportaion) - all im mm's
         Returns:
             Dataset with forcing data.
         """
@@ -77,7 +99,7 @@ class HBVForcing(DefaultForcing):
             raise ValueError("Directory or forcing_file is not set")
         fn = self.directory / self.forcing_file
         forcing = np.loadtxt(fn, delimiter="	")
-        names = ["year", "month", "day", "pr", "pev"]
+        names = ["year", "month", "day", "pr","Q", "pev"]
         df_in = pd.DataFrame(forcing, columns=names)
         df_in.index = df_in.apply(lambda x: pd.Timestamp(f'{int(x.year)}-{int(x.month)}-{int(x.day)}'), axis=1)
         df_in.drop(columns=["year", "month", "day"], inplace=True)
@@ -89,6 +111,13 @@ class HBVForcing(DefaultForcing):
                             "history": "Created by ewatercycle_HBV.forcing.HBVForcing.to_xarray()",
                                 },
                         )
+        time = str(datetime.datetime.now())[:-10].replace(":","_")
+        ds_name = f"HBV_forcing_{time}.nc"
+        out_dir = self.directory / ds_name
+        if not out_dir.is_file():
+            ds.to_netcdf()
+        self.pr = ds_name  # these are appended in model.py
+        self.pev = ds_name # these are appended in model.py
         return ds
 
 # TODO add generate from ERA5 forcing dataset and Rhine.

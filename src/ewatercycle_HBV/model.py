@@ -5,7 +5,7 @@ from pathlib import Path
 from typing import Any
 
 from ewatercycle.base.forcing import GenericLumpedForcing # or later Use custom forcing instead?
-from ewatercycle-HBV.forcing import HBVForcing # Use custom forcing instead
+from ewatercycle_HBV.forcing import HBVForcing # Use custom forcing instead
 from ewatercycle.base.model import ContainerizedModel, eWaterCycleModel
 from ewatercycle.container import ContainerImage
 
