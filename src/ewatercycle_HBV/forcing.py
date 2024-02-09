@@ -111,7 +111,7 @@ class HBVForcing(DefaultForcing):
                             "history": "Created by ewatercycle_HBV.forcing.HBVForcing.to_xarray()",
                                 },
                         )
-        time = str(datetime.datetime.now())[:-10].replace(":","_")
+        time = str(datetime.now())[:-10].replace(":","_")
         ds_name = f"HBV_forcing_{time}.nc"
         out_dir = self.directory / ds_name
         if not out_dir.is_file():
