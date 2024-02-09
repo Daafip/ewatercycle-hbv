@@ -4,17 +4,10 @@ from collections.abc import ItemsView
 from pathlib import Path
 from typing import Any, Type
 
-
 from ewatercycle.base.forcing import GenericLumpedForcing # or later Use custom forcing instead?
 from ewatercycle_HBV.forcing import HBVForcing # Use custom forcing instead
 from ewatercycle.base.model import ContainerizedModel, eWaterCycleModel
 from ewatercycle.container import ContainerImage
-
-# for local mode
-from ewatercycle.base.model import LocalModel
-from HBV import HBV as HBV_bmi
-from bmipy import Bmi
-
 
 
 class HBVMethods(eWaterCycleModel):
@@ -71,9 +64,5 @@ class HBVMethods(eWaterCycleModel):
 class HBV(ContainerizedModel, HBVMethods):
     """The HBV eWaterCycle model, with the Container Registry docker image."""
     bmi_image: ContainerImage = ContainerImage(
-        "ghcr.io/daafip/hbv-bmi-grpc4bmi:v0.1.6"
+        "ghcr.io/daafip/hbv-bmi-grpc4bmi:v0.1.7"
     )
-
-class LocalModelHBV(LocalModel, HBVMethods):
-    """The HBV eWaterCycle model, with the local BMI."""
-    bmi_class: Type[Bmi] = HBV_bmi
