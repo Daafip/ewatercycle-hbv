@@ -4,9 +4,12 @@ from collections.abc import ItemsView
 from pathlib import Path
 from typing import Any
 
-from ewatercycle.base.forcing import GenericLumpedForcing
+from ewatercycle.base.forcing import GenericLumpedForcing # or later Use custom forcing instead?
+# from ewatercycle.base.forcing import DefaultForcing # Use custom forcing instead
 from ewatercycle.base.model import ContainerizedModel, eWaterCycleModel
 from ewatercycle.container import ContainerImage
+
+
 
 
 class HBVMethods(eWaterCycleModel):
@@ -27,6 +30,19 @@ class HBVMethods(eWaterCycleModel):
 
     def _make_cfg_file(self, **kwargs) -> Path:
         """Write model configuration file."""
+        self._config["precipitation_file"] = str(
+            self.forcing.directory / self.forcing.pr
+        )
+        ## possibly add later for snow?
+        # self._config["temperature_file"] = str(
+        #     self.forcing.directory / self.forcing.tas
+        # )
+        # self._config["temperature_min_file"] = str(
+        #     self.forcing.directory / self.forcing.tasmin
+        # )
+        # self._config["temperature_max_file"] = str(
+        #     self.forcing.directory / self.forcing.tasmax
+        # )
 
         for kwarg in kwargs:  # Write any kwargs to the config.
             self._config[kwarg] = kwargs[kwarg]
@@ -46,5 +62,5 @@ class HBVMethods(eWaterCycleModel):
 class HBV(ContainerizedModel, HBVMethods):
     """The HBV eWaterCycle model, with the Container Registry docker image."""
     bmi_image: ContainerImage = ContainerImage(
-        "ghcr.io/daafip/hbv-bmi-grpc4bmi:v0.1.3"
+        "ghcr.io/daafip/hbv-bmi-grpc4bmi:v0.1.5"
     )
