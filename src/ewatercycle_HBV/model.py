@@ -50,6 +50,7 @@ class HBVMethods(eWaterCycleModel):
             self._config[kwarg] = kwargs[kwarg]
 
         config_file = self._cfg_dir / "HBV_config.json"
+        # config_file = self._cfg_dir.parent / "HBV_models" / self._cfg_dir.name / "HBV_config.json"
 
         with config_file.open(mode="w") as f:
             f.write(json.dumps(self._config, indent=4))
