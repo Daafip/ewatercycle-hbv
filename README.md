@@ -1,6 +1,10 @@
 # eWaterCycle plugin - HBV
 
-This package is based on the [Leaky bucket](https://github.com/eWaterCycle/ewatercycle-leakybucket/tree/main)
+This package is based on the [Leaky bucket](https://github.com/eWaterCycle/ewatercycle-leakybucket/tree/main) & is a wrapper for the [HBV-bmi](https://github.com/Daafip/HBV-bmi) model. 
+
+HBV (Hydrologiska Byråns Vattenbalansavdelning) is a conceptual hydrological model. For more information on it's history, see this [paper](https://hess.copernicus.org/articles/26/1371/2022/).
+
+This current implementation is _without_ a snow reservoir. 
 
 ## Installation
 Install this package alongside your eWaterCycle installation
@@ -21,4 +25,4 @@ For more information on how this plugin works, and on how to implement your own 
 
 ## License
 
-`ewatercycle-plugin` & thus this template is distributed under the terms of the [Apache-2.0](https://spdx.org/licenses/Apache-2.0.html) license.
+This is a `ewatercycle-plugin` & thus this is distributed under the same terms as the template: the [Apache-2.0](https://spdx.org/licenses/Apache-2.0.html) license.
