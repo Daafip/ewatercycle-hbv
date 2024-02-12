@@ -28,3 +28,10 @@ For more information on how this plugin works, and on how to implement your own 
 ## License
 
 This is a `ewatercycle-plugin` & thus this is distributed under the same terms as the template: the [Apache-2.0](https://spdx.org/licenses/Apache-2.0.html) license.
+
+### Changelog
+
+#### v1.0.0
+working basic version after various testing [versions](https://test.pypi.org/project/ewatercycle-HBV/)
+#### v1.1.0
+upgrade to new version: added support for updating memory vector on the fly for Data assimilation 
