@@ -34,4 +34,6 @@ This is a `ewatercycle-plugin` & thus this is distributed under the same terms a
 #### v1.0.0
 working basic version after various testing [versions](https://test.pypi.org/project/ewatercycle-HBV/)
 #### v1.1.0
-upgrade to new version: added support for updating memory vector on the fly for Data assimilation 
+upgrade to new version: added support for updating memory vector on the fly for Data assimilation
+#### v1.1.1
+Fixed bug with Tlag and setting memory vector correctly 
