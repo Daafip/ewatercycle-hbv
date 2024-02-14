@@ -39,3 +39,6 @@ upgrade to new version: added support for updating memory vector on the fly for 
 Fixed bug with Tlag and setting memory vector correctly 
 ##### v1.1.2
 Adding `.finalize()` method - clears up the directory. Especially useful for DA. 
+### V1.2.0
+- pretty big issue with setting values fixed - won't affect most use but will cause issues for Data Assimilation
+- use opportunity to name all HBV packages/naming/images to 1.2.0 
