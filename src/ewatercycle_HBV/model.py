@@ -62,6 +62,26 @@ class HBVMethods(eWaterCycleModel):
         return self._config.items()
 
 
+    def finalize(self) -> None:
+        """Perform tear-down tasks for the model.
+
+        After finalization, the model should not be used anymore.
+
+        ADDED: Remove created config files, especially useful for DA models
+        """
+
+        # remove bmi
+        self._bmi.finalize()
+        del self._bmi
+
+        # remove config file
+        config_file = self._cfg_dir / "HBV_config.json"
+        config_file.unlink()
+
+        # once empty, remove it
+        self._cfg_dir.rmdir()
+
+
 class HBV(ContainerizedModel, HBVMethods):
     """The HBV eWaterCycle model, with the Container Registry docker image."""
     bmi_image: ContainerImage = ContainerImage(
