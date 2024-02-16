@@ -87,7 +87,7 @@ class HBVForcing(DefaultForcing):
     #     )
 
     # TODO Implement this to take .txt and add them?
-    def to_xarray(self) -> xr.Dataset:
+    def from_test_txt(self) -> xr.Dataset:
         """Load forcing data from a txt file into an xarray dataset.
         Must contain ["year", "month", "day", "pr","Q", "pev"] in columns
         Will convert date to pandas.Timestamp()
@@ -119,6 +119,80 @@ class HBVForcing(DefaultForcing):
         self.pr = ds_name  # these are appended in model.py
         self.pev = ds_name # these are appended in model.py
         return ds
+
+    def from_camels_txt(self) -> xr.Dataset:
+        """Load forcing data from a txt file into an xarray dataset.
+        Must be in the same format as the CAMELS dataset:
+        3 lines containing: lat, elevation and area.
+        4th line with headers: 'Year Mnth Day Hr dayl(s) prcp(mm/day) srad(W/m2) swe(mm) tmax(C) tmin(C) vp(Pa)'
+        Takes from the 5th line onwards with \t delimiter.
+        Will convert date to pandas.Timestamp()
+        Then convert from pandas to a xarray.
+        Returns:
+            Dataset with forcing data.
+        """
+        if self.directory is None or self.forcing_file is None:
+            raise ValueError("Directory or forcing_file is not set")
+        fn = self.directory / self.forcing_file
+        data = {}
+        with open(fn, 'r') as fin:
+            line_n = 0
+            for line in fin:
+                if line_n == 0:
+                    data["lat"] = float(line.strip())
+                elif line_n == 1:
+                    data["elevation(m)"] = float(line.strip())
+                elif line_n == 2:
+                    data["area basin(m^2)"] = float(line.strip())
+                elif line_n == 3:
+                    header = line.strip()
+                else:
+                    break
+                line_n += 1
+
+        headers = header.split(' ')[3:]
+        headers[0] = "YYYY MM DD HH"
+
+        # read with pandas
+        df = pd.read_csv(fn, skiprows=4, delimiter="\t", names=headers)
+        df.index = df.apply(lambda x: pd.Timestamp(x["YYYY MM DD HH"][:-3]), axis=1)
+        df.drop(columns="YYYY MM DD HH", inplace=True)
+        df.index.name = "time"
+
+        # rename
+        new_names = [item.split('(')[0] for item in list(df.columns)]
+        rename_dict = dict(zip(headers[1:], new_names))
+        df.rename(columns=rename_dict, inplace=True)
+        rename_dict2 = {'prcp': 'pr',
+                        'tmax': 'tasmax',
+                        'tmin': 'tasmin'}
+        df.rename(columns=rename_dict2, inplace=True)
+
+        # add attributes
+        attrs = {"title": "HBV forcing data",
+                 "history": "Created by ewatercycle_HBV.forcing.HBVForcing.from_camels_txt()",
+                 "units": "daylight(s), precipitation(mm/day), mean radiation(W/m2), snow water equivalen(mm), temperature max(C), temperature min(C), vapour pressure(Pa)", }
+
+        # add the data lines with catchment characteristics to the description
+        attrs.update(data)
+        # TODO use netcdf-cf conventions
+        ds = xr.Dataset(data_vars=df,
+                        attrs=attrs,
+                        )
+
+
+        time = str(datetime.now())[:-10].replace(":","_")
+        # TODO maybe change this time aspect? can get quite large
+        ds_name = f"HBV_forcing_CAMELS_{time}.nc"
+        out_dir = self.directory / ds_name
+        if not out_dir.exists():
+            ds.to_netcdf(out_dir)
+        self.pr = ds_name  # these are appended in model.py
+
+        # TODO add Potential Evaporation conversion using srad, vp & tasmin/maxs
+        # self.pev = ds_name # these are appended in model.py
+        return ds
+
 
 # TODO add generate from ERA5 forcing dataset and Rhine.
 """
