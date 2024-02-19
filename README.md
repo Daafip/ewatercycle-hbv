@@ -42,3 +42,9 @@ Adding `.finalize()` method - clears up the directory. Especially useful for DA.
 ### V1.2.0
 - pretty big issue with setting values fixed - won't affect most use but will cause issues for Data Assimilation
 - use opportunity to name all HBV packages/naming/images to 1.2.0 
+### V1.3.1
+- now supports camels.txt files natively. Just download the ones you want from there and add it. 
+- make sure you also include the alpha value which is a model output from the run, defaults to 1.26 but varies per catchment. Eq1 of camels paper.
+### v1.3.2. - 1.3.3
+- now correctly slices the ds to given start and end time whoops
+- 

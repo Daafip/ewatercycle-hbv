@@ -24,6 +24,7 @@ class HBVMethods(eWaterCycleModel):
         "potential_evaporation_file": "",
         "parameters": "",
         "initial_storage": "",
+        "alpha": 1.26,
     }
 
     def _make_cfg_file(self, **kwargs) -> Path:
@@ -74,12 +75,20 @@ class HBVMethods(eWaterCycleModel):
         self._bmi.finalize()
         del self._bmi
 
+        # TODO: remove data set file
+        # TODO maybe change this time aspect? can get quite large - or simply remove in finalize
+        # ds_name = f"HBV_forcing_CAMELS_{time}.nc"
+        # out_dir = self.directory / ds_name
+        # if not out_dir.exists():
+        #     ds.to_netcdf(out_dir)
+
         # remove config file
         config_file = self._cfg_dir / "HBV_config.json"
         config_file.unlink()
 
         # once empty, remove it
         self._cfg_dir.rmdir()
+
 
 
 class HBV(ContainerizedModel, HBVMethods):
