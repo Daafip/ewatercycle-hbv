@@ -181,23 +181,26 @@ class HBVForcing(DefaultForcing):
         ds = xr.Dataset(data_vars=df,
                         attrs=attrs,
                         )
-
-        time = str(datetime.now())[:-10].replace(":","_")
-        # TODO maybe change this time aspect? can get quite large
-        ds_name = f"HBV_forcing_CAMELS_{time}.nc"
-        out_dir = self.directory / ds_name
-        if not out_dir.exists():
-            ds.to_netcdf(out_dir)
-
         # Potential Evaporation conversion using srad & tasmin/maxs
         ds['pev'] = calc_PET(ds['srad'],
                              ds["tasmin"].values,
                              ds["tasmax"].values,
-                             df.index.dayofyear.values,
+                             ds["time.dayofyear"].values,
                              self.alpha,
                              ds.attrs['elevation(m)'],
                              ds.attrs['lat']
                              )
+        # crop ds
+        start = np.datetime64(self.start_time)
+        end = np.datetime64(self.end_time)
+        ds = ds.isel(time=(ds['time'].values > start) & ((ds['time'].values < end)))
+
+        time = str(datetime.now())[:-10].replace(":","_")
+        # TODO maybe change this time aspect? can get quite large - or simply remove in finalize
+        ds_name = f"HBV_forcing_CAMELS_{time}.nc"
+        out_dir = self.directory / ds_name
+        if not out_dir.exists():
+            ds.to_netcdf(out_dir)
 
         self.pev = ds_name # these are appended in model.py
         self.pr = ds_name  # these are appended in model.py
