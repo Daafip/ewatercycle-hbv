@@ -24,6 +24,7 @@ class HBVMethods(eWaterCycleModel):
         "potential_evaporation_file": "",
         "parameters": "",
         "initial_storage": "",
+        "alpha": 1.26,
     }
 
     def _make_cfg_file(self, **kwargs) -> Path:

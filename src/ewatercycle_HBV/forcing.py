@@ -69,6 +69,8 @@ class HBVForcing(DefaultForcing):
     # or pr and pev are supplied seperately - can also be the same dataset
     pr: Optional[str] = "forcing.nc"
     pev: Optional[str] = "forcing.nc"
+    alpha: Optional[float] = 1.26
+
 
     # @classmethod
     # def _build_recipe(
@@ -180,20 +182,101 @@ class HBVForcing(DefaultForcing):
                         attrs=attrs,
                         )
 
-
         time = str(datetime.now())[:-10].replace(":","_")
         # TODO maybe change this time aspect? can get quite large
         ds_name = f"HBV_forcing_CAMELS_{time}.nc"
         out_dir = self.directory / ds_name
         if not out_dir.exists():
             ds.to_netcdf(out_dir)
-        self.pr = ds_name  # these are appended in model.py
 
-        # TODO add Potential Evaporation conversion using srad, vp & tasmin/maxs
-        # self.pev = ds_name # these are appended in model.py
+        # Potential Evaporation conversion using srad & tasmin/maxs
+        ds['pev'] = calc_PET(ds['srad'],
+                             ds["tasmin"].values,
+                             ds["tasmax"].values,
+                             df.index.dayofyear.values,
+                             self.alpha,
+                             ds.attrs['elevation(m)'],
+                             ds.attrs['lat']
+                             )
+
+        self.pev = ds_name # these are appended in model.py
+        self.pr = ds_name  # these are appended in model.py
         return ds
 
+def calc_PET(s_rad, t_min, t_max, doy, alpha, elev, lat):
+    """
+    calculates Potential Evaporation using Priestly–Taylor PET estimate, callibrated with longterm P-T trends from the camels data set (alpha).
+    -------
+    Params:
+    Rn: net radiation estimate in W/m^2: converted to J/m^2/d
+    s: (aka delta), is the slope of the saturation vapor pressure relationship in kPa/degC
+    alpha: factor callibrated from longterm P-T trend compensating for lack of other data.
+    -------
+    Assumptions:
+    G = 0 in a day: no loss to ground.
 
+    -------
+    reference:
+
+    based on code from:
+    https://github.com/neuralhydrology/neuralhydrology/blob/master/neuralhydrology/datautils/pet.py
+    kratzert et al. 2022
+    NeuralHydrology --- A Python library for Deep Learning research in hydrology,
+    Frederik Kratzert and Martin Gauch and Grey Nearing and Daniel Klotz,
+    https://doi.org/10.21105/joss.04050
+
+    Who base on allen et al. (1998) 'FOA 56' & Newman et al (2015) 'CAMELS dataset'
+
+    """
+    G = 0
+    LAMBDA = 2.45  # MJ/kg
+
+    s_rad = s_rad * 0.0864  # conversion Wm-2 -> MJm-2day-1
+    albedo = 0.23  # planetary albedo
+    in_sw_rad = (1 - albedo) * s_rad
+
+    # solar declination
+    sol_dec = 0.409 * np.sin((2 * np.pi) / 365 * doy - 1.39)  # Equation 24 FAO-56 Allen et al. (1998)
+
+    # Sunset hour angle
+    lat = lat * (np.pi / 180)  # degree to rad
+    term = -np.tan(lat) * np.tan(sol_dec)
+    term[term < -1] = -1
+    term[term > 1] = 1
+    sha = np.arccos(term)
+
+    # Inverse relative distance between Earth and Sun:
+    ird = 1 + 0.033 * np.cos((2 * np.pi) / 365 * doy)  # Equation 23 FAO-56 Allen et al. (1998)
+
+    # Extraterrestrial Radiation -  Equation 21 FAO-56 Allen et al. (1998)
+    et_rad = ((24 * 60) / np.pi * 0.082 * ird) * (
+                sha * np.sin(lat) * np.sin(sol_dec) + np.cos(lat) * np.cos(sol_dec) * np.sin(sha))
+
+    # Clear sky radiation Equation 37 FAO-56 Allen et al. (1998)
+    cs_rad = (0.75 + 2 * 10e-5 * elev) * et_rad
+
+    # Actual vapor pressure estimated using min temperature - Equation 48 FAO-56 Allen et al. (1998
+    avp = 0.611 * np.exp((17.27 * t_min) / (t_min + 237.3))
+
+    # Net outgoing longwave radiation - Equation 49 FAO-56 Allen et al. (1998)
+    term1 = ((t_max + 273.16) ** 4 + (t_min + 273.16) ** 4) / 2  # conversion in K in equation
+    term2 = 0.34 - 0.14 * np.sqrt(avp)
+    term3 = 1.35 * s_rad / cs_rad - 0.35
+    stefan_boltzman = 4.903e-09
+    out_lw_rad = stefan_boltzman * term1 * term2 * term3
+
+    # psychrometer constant (kPa/C) - varies with altitude
+    temp = (293.0 - 0.0065 * elev) / 293.0
+    atm_pressure = np.power(temp, 5.26) * 101.3  # Equation 7 FAO-56 Allen et al. (1998)
+    gamma = 0.000665 * atm_pressure
+
+    # Slope of saturation vapour pressure curve Equation 13 FAO-56 Allen et al. (1998)
+    t_mean = 0.5 * (t_min + t_max)
+    s = 4098 * (0.6108 * np.exp((17.27 * t_mean) / (t_mean + 237.3))) / ((t_mean + 237.3) ** 2)
+
+    Rn = in_sw_rad - out_lw_rad
+    PET = ((alpha / LAMBDA) * s * (Rn - G)) / (s + gamma)
+    return PET * 0.408  # energy to evap
 # TODO add generate from ERA5 forcing dataset and Rhine.
 """
 .. code-block:: python
