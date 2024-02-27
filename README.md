@@ -47,5 +47,5 @@ Adding `.finalize()` method - clears up the directory. Especially useful for DA.
 - make sure you also include the alpha value which is a model output from the run, defaults to 1.26 but varies per catchment. Eq1 of camels paper.
 ### v1.3.2. - 1.3.3
 - now correctly slices the ds to given start and end time whoops
-### v1.3.4 - 1.3.8
+### v1.3.4 - 1.3.9
 - formalises forcing: either `.txt`  or (two) `.nc` forcing supplied & run corresponding code
