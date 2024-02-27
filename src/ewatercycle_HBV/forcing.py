@@ -69,11 +69,23 @@ class HBVForcing(DefaultForcing):
     # or pr and pev are supplied seperately - can also be the same dataset
     pr: Optional[str] = "forcing.nc"
     pev: Optional[str] = "forcing.nc"
-    alpha: Optional[float] = 1.26
+    alpha: Optional[float] = 1.26 # varies per catchment, mostly 1.26?
+    __test_data_bool: Optional[bool] = False # allows to use self.from_test_txt()
     
 
     # intended use
-    # if self.forcing_txt_defined():
+    def __init__(self):
+        # if test data:
+        if self.__test_data_bool:
+            self.from_test_txt()
+        # else, if a txt file is defined
+        elif self.forcing_txt_defined():
+            self.from_camels_txt()
+        # else, if two nc files are defined
+        elif self.forcing_nc_defined():
+            pass # need to do nothing as already defined
+        else:
+            raise UserWarning("Ensure either a txt file with camels data or an(/set of) xarrays is defined")
 
     #self.from_camels_txt()
 
@@ -98,7 +110,17 @@ class HBVForcing(DefaultForcing):
             self.forcing_file
         except NameError:
             return False
-        else: 
+        else:
+            return True
+
+    def forcing_nc_defined(self):
+        """""test whether user defined forcing file"""
+        try:
+            self.pr
+            self.pev
+        except NameError:
+            return False
+        else:
             return True
     
     # TODO Implement this to take .txt and add them?
