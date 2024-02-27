@@ -28,21 +28,22 @@ class HBVMethods(eWaterCycleModel):
         "alpha": 1.26,
     }
 
-    # do some basic test to check on forcing
-
-    if forcing.__test_data_bool:
-        forcing.from_test_txt()
-    # else, if a txt file is defined
-    elif forcing.forcing_txt_defined():
-        forcing.from_camels_txt()
-    # else, if two nc files are defined
-    elif forcing.forcing_nc_defined():
-        pass # need to do nothing as already defined
-    else:
-        raise UserWarning("Ensure either a txt file with camels data or an(/set of) xarrays is defined")
-
     def _make_cfg_file(self, **kwargs) -> Path:
         """Write model configuration file."""
+
+        # do some basic test to check on forcing
+        # check if test data from txt: more debug mode
+        if self.forcing.__test_data_bool:
+            self.forcing.from_test_txt()
+        # else, if a txt file is defined
+        elif self.forcing.forcing_txt_defined():
+            self.forcing.from_camels_txt()
+        # else, if two nc files are defined
+        elif self.forcing.forcing_nc_defined():
+            pass  # need to do nothing as already defined
+        else:
+            raise UserWarning("Ensure either a txt file with camels data or an(/set of) xarrays is defined")
+
         self._config["precipitation_file"] = str(
             self.forcing.directory / self.forcing.pr
         )
@@ -69,6 +70,7 @@ class HBVMethods(eWaterCycleModel):
 
         with config_file.open(mode="w") as f:
             f.write(json.dumps(self._config, indent=4))
+
 
         return config_file
 
