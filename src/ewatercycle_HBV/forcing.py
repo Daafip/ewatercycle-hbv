@@ -69,8 +69,15 @@ class HBVForcing(DefaultForcing):
     # or pr and pev are supplied seperately - can also be the same dataset
     pr: Optional[str] = "forcing.nc"
     pev: Optional[str] = "forcing.nc"
-    alpha: Optional[float] = 1.26
+    alpha: Optional[float] = 1.26 # varies per catchment, mostly 1.26?
+    test_data_bool: bool = False # allows to use self.from_test_txt()
+    
 
+    # intended use
+    # if test data:
+
+
+    #self.from_camels_txt()
 
     # @classmethod
     # def _build_recipe(
@@ -87,7 +94,25 @@ class HBVForcing(DefaultForcing):
     #         shape=shape,
     #         dataset=dataset,
     #     )
+    def forcing_txt_defined(self):
+        """""test whether user defined forcing file"""
+        try:
+            self.forcing_file
+        except NameError:
+            return False
+        else:
+            return True
 
+    def forcing_nc_defined(self):
+        """""test whether user defined forcing file"""
+        try:
+            self.pr
+            self.pev
+        except NameError:
+            return False
+        else:
+            return True
+    
     # TODO Implement this to take .txt and add them?
     def from_test_txt(self) -> xr.Dataset:
         """Load forcing data from a txt file into an xarray dataset.
