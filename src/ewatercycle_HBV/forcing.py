@@ -70,7 +70,7 @@ class HBVForcing(DefaultForcing):
     pr: Optional[str] = "forcing.nc"
     pev: Optional[str] = "forcing.nc"
     alpha: Optional[float] = 1.26 # varies per catchment, mostly 1.26?
-    __test_data_bool: Optional[bool] = False # allows to use self.from_test_txt()
+    test_data_bool: bool = False # allows to use self.from_test_txt()
     
 
     # intended use

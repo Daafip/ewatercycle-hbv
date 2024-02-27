@@ -33,7 +33,7 @@ class HBVMethods(eWaterCycleModel):
 
         # do some basic test to check on forcing
         # check if test data from txt: more debug mode
-        if self.forcing.__test_data_bool:
+        if self.forcing.test_data_bool:
             self.forcing.from_test_txt()
         # else, if a txt file is defined
         elif self.forcing.forcing_txt_defined():
