@@ -1,5 +1,6 @@
 """eWaterCycle wrapper for the HBV model."""
 import json
+import warnings
 from collections.abc import ItemsView
 from pathlib import Path
 from typing import Any, Type
@@ -82,14 +83,22 @@ class HBVMethods(eWaterCycleModel):
         # if not out_dir.exists():
         #     ds.to_netcdf(out_dir)
 
-        # remove config file
-        config_file = self._cfg_dir / "HBV_config.json"
-        config_file.unlink()
+        try:
+            # remove config file
+            config_file = self._cfg_dir / "HBV_config.json"
+            config_file.unlink()
+        except FileNotFoundError:
+            warnings.warn(message=f'Config not found at {config_file}, removed by user?',category=UserWarning)
 
-        # once empty, remove it
-        self._cfg_dir.rmdir()
+        try:
+            # once empty, remove it
+            self._cfg_dir.rmdir()
+        except FileNotFoundError:
+            warnings.warn(message=f'Config folder not found at {self._cfg_dir.rmdir()}',category=UserWarning)
 
 
+        for file in ["potential_evaporation_file", "precipitation_file"]:
+            self._config[file]
 
 class HBV(ContainerizedModel, HBVMethods):
     """The HBV eWaterCycle model, with the Container Registry docker image."""

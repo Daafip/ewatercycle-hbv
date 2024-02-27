@@ -70,6 +70,11 @@ class HBVForcing(DefaultForcing):
     pr: Optional[str] = "forcing.nc"
     pev: Optional[str] = "forcing.nc"
     alpha: Optional[float] = 1.26
+    from_CAMELS: Optional[bool] = False
+
+    self.from_camels_txt()
+
+    # intended use
 
 
     # @classmethod
