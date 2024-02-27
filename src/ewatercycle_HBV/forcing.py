@@ -74,18 +74,8 @@ class HBVForcing(DefaultForcing):
     
 
     # intended use
-    def __init__(self):
-        # if test data:
-        if self.__test_data_bool:
-            self.from_test_txt()
-        # else, if a txt file is defined
-        elif self.forcing_txt_defined():
-            self.from_camels_txt()
-        # else, if two nc files are defined
-        elif self.forcing_nc_defined():
-            pass # need to do nothing as already defined
-        else:
-            raise UserWarning("Ensure either a txt file with camels data or an(/set of) xarrays is defined")
+    # if test data:
+
 
     #self.from_camels_txt()
 
