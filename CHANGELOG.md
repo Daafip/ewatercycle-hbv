@@ -18,3 +18,6 @@ Adding `.finalize()` method - clears up the directory. Especially useful for DA.
 - now correctly slices the ds to given start and end time whoops
 ### v1.3.4 - 1.3.9
 - formalises forcing: either `.txt`  or (two) `.nc` forcing supplied & run corresponding code
+### v1.3.10
+- Refactor `forcing_file` attribute to `camel_file` -> as essentially its now a txt file of specific class which the from_camels functions is run on in model startup
+- change selection of dataset period to be inclusive
