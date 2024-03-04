@@ -32,15 +32,12 @@ class HBVMethods(eWaterCycleModel):
         """Write model configuration file."""
 
         # do some basic test to check on forcing
-        # check if test data from txt: more debug mode
         if self.forcing.test_data_bool:
             self.forcing.from_test_txt()
-        # else, if a txt file is defined
-        elif self.forcing.forcing_txt_defined():
+        elif self.forcing.camel_txt_defined():
             self.forcing.from_camels_txt()
-        # else, if two nc files are defined
         elif self.forcing.forcing_nc_defined():
-            pass  # need to do nothing as already defined
+            pass # to do: quality check here in future rather than in model.
         else:
             raise UserWarning("Ensure either a txt file with camels data or an(/set of) xarrays is defined")
 
@@ -66,7 +63,6 @@ class HBVMethods(eWaterCycleModel):
             self._config[kwarg] = kwargs[kwarg]
 
         config_file = self._cfg_dir / "HBV_config.json"
-        # config_file = self._cfg_dir.parent / "HBV_models" / self._cfg_dir.name / "HBV_config.json"
 
         with config_file.open(mode="w") as f:
             f.write(json.dumps(self._config, indent=4))

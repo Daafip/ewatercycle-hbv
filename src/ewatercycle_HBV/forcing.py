@@ -10,32 +10,23 @@ import xarray as xr
 import numpy as np
 
 from ewatercycle.base.forcing import DefaultForcing
-# from ewatercycle.esmvaltool.builder import RecipeBuilder
-from ewatercycle.esmvaltool.schema import Dataset, Recipe
-
 
 class HBVForcing(DefaultForcing):
     """Container for HBV forcing data.
 
-    Args:
+    Attributes:
         directory: Directory where forcing data files are stored.
         start_time: Start time of forcing in UTC and ISO format string e.g.
             'YYYY-MM-DDTHH:MM:SSZ'.
         end_time: End time of forcing in UTC and ISO format string e.g.
             'YYYY-MM-DDTHH:MM:SSZ'.
         shape: Path to a shape file. Used for spatial selection.
-
-        -------------------------
-        --> Either supply a forcing file: (sadly still often used by hydroligists)
-        forcing_file: .txt file that contains forcings for HBV model including precipitation and evaporation
+        camels_file: .txt file that contains CAMELS forcings from https://hess.copernicus.org/articles/21/5293/2017/
+        pr: a NetCDF (.nc) file containing precipitation - ensure yourself that these already match start_time & end time
+        pr: a NetCDF (.nc) file containing precipitation
+        alpha: float provided in camels dataset but not in the forcing file, instead in the model results.
+        test_data_bool: False by default, set True if instead of a camels file, a test files is passed for HBV including precipitation and evaporation
                     contains columns: ["year", "month", "day", "pr", "pev"] seperated by a space
-        Use this with .to_xarray() to generate the files
-        -------------------------
-
-        --> or directly supply the netcdf dataset file
-        precipitation_file: xarray containing precipition
-        potential_evaporation_file: xarray containing potential evaporation, same format as above
-
     Examples:
 
         From existing forcing data:
@@ -48,50 +39,38 @@ class HBVForcing(DefaultForcing):
                 directory='/home/davidhaasnoot/Code/Forcing/',
                 start_time='1997-08-01T00:00:00Z',
                 end_time='2000-08-31T00:00:00Z',
-                forcing_file='forcing.txt',
+                camels_file='01620500_lump_cida_forcing_leap.txt',
+                alpha = 1.20
             )
 
-            # ---------------- or --------------------
+        ------------------------------------
+        Or provide forcing yourself as a NetCDF file
+
+        .. code-block:: python
             forcing = sources.HBVForcing(
                 directory='/home/davidhaasnoot/Code/Forcing/',
                 start_time='1997-08-01T00:00:00Z',
                 end_time='2000-08-31T00:00:00Z',
-                precipitation_file="precipitation_file.nc"
-                potential_evaporation_file="potential_evaporation_file.nc"
+                pr="precipitation_file.nc"
+                pev="potential_evaporation_file.nc"
             )
-            # where precipitation_file & potential_evaporation_file can be the same aslong as
-            # they contain a 'pr' & 'pev' value
+
+        where precipitation_file & potential_evaporation_file can be the same aslong as
+        they contain a 'pr' & 'pev' variable
 
     """
 
     # either a forcing file is supplied
-    forcing_file: Optional[str] = ".txt"
+    camels_file: Optional[str] = ".txt"
     # or pr and pev are supplied seperately - can also be the same dataset
     pr: Optional[str] = ".nc"
     pev: Optional[str] = ".nc"
     alpha: Optional[float] = 1.26 # varies per catchment, mostly 1.26?
     test_data_bool: bool = False # allows to use self.from_test_txt()
 
-
-    #self.from_camels_txt()
-    # @classmethod
-    # def _build_recipe(
-    #     cls,
-    #     start_time: datetime,
-    #     end_time: datetime,
-    #     shape: Path,
-    #     dataset: Dataset | str | dict,
-    #     **model_specific_options,
-    # ):
-    #     return build_marrmot_recipe(
-    #         start_year=start_time.year,
-    #         end_year=end_time.year,
-    #         shape=shape,
-    #         dataset=dataset,
-    #     )
-    def forcing_txt_defined(self):
+    def camels_txt_defined(self):
         """""test whether user defined forcing file"""
-        if len(self.forcing_file) > 4:
+        if len(self.camels_file) > 4:
             return True
         else:
             return False
@@ -102,7 +81,6 @@ class HBVForcing(DefaultForcing):
             return True
         else:
             return False
-    
     # TODO Implement this to take .txt and add them?
     def from_test_txt(self) -> xr.Dataset:
         """Load forcing data from a txt file into an xarray dataset.
@@ -112,9 +90,9 @@ class HBVForcing(DefaultForcing):
         Returns:
             Dataset with forcing data.
         """
-        if self.directory is None or self.forcing_file is None:
-            raise ValueError("Directory or forcing_file is not set")
-        fn = self.directory / self.forcing_file
+        if self.directory is None or self.camels_file is None:
+            raise ValueError("Directory or camels_file is not set")
+        fn = self.directory / self.camels_file
         forcing = np.loadtxt(fn, delimiter="	")
         names = ["year", "month", "day", "pr","Q", "pev"]
         df_in = pd.DataFrame(forcing, columns=names)
@@ -148,9 +126,9 @@ class HBVForcing(DefaultForcing):
         Returns:
             Dataset with forcing data.
         """
-        if self.directory is None or self.forcing_file is None:
-            raise ValueError("Directory or forcing_file is not set")
-        fn = self.directory / self.forcing_file
+        if self.directory is None or self.camels_file is None:
+            raise ValueError("Directory or camels_file is not set")
+        fn = self.directory / self.camels_file
         data = {}
         with open(fn, 'r') as fin:
             line_n = 0
@@ -173,7 +151,7 @@ class HBVForcing(DefaultForcing):
         # read with pandas
         df = pd.read_csv(fn, skiprows=4, delimiter="\t", names=headers)
         df.index = df.apply(lambda x: pd.Timestamp(x["YYYY MM DD HH"][:-3]), axis=1)
-        df.drop(columns="YYYY MM DD HH", inplace=True)
+        df = df.drop(columns="YYYY MM DD HH")
         df.index.name = "time"
 
         # rename
@@ -197,7 +175,7 @@ class HBVForcing(DefaultForcing):
                         attrs=attrs,
                         )
         # Potential Evaporation conversion using srad & tasmin/maxs
-        ds['pev'] = calc_PET(ds['srad'],
+        ds['pev'] = calc_pet(ds['srad'],
                              ds["tasmin"].values,
                              ds["tasmax"].values,
                              ds["time.dayofyear"].values,
@@ -208,7 +186,7 @@ class HBVForcing(DefaultForcing):
         # crop ds
         start = np.datetime64(self.start_time)
         end = np.datetime64(self.end_time)
-        ds = ds.isel(time=(ds['time'].values > start) & ((ds['time'].values < end)))
+        ds = ds.isel(time=(ds['time'].values >= start) & (ds['time'].values <= end))
 
         time = str(datetime.now())[:-10].replace(":","_")
         # TODO maybe change this time aspect? can get quite large - or simply remove in finalize
@@ -221,14 +199,15 @@ class HBVForcing(DefaultForcing):
         self.pr = ds_name  # these are appended in model.py
         return ds
 
-def calc_PET(s_rad, t_min, t_max, doy, alpha, elev, lat):
+def calc_pet(s_rad, t_min, t_max, doy, alpha, elev, lat):
     """
     calculates Potential Evaporation using Priestly–Taylor PET estimate, callibrated with longterm P-T trends from the camels data set (alpha).
     -------
-    Params:
-    Rn: net radiation estimate in W/m^2: converted to J/m^2/d
-    s: (aka delta), is the slope of the saturation vapor pressure relationship in kPa/degC
-    alpha: factor callibrated from longterm P-T trend compensating for lack of other data.
+    args:
+        Rn: net radiation estimate in W/m^2: converted to J/m^2/d
+        s: (aka delta), is the slope of the saturation vapor pressure relationship in kPa/degC
+        alpha: factor callibrated from longterm P-T trend compensating for lack of other data.
+
     -------
     Assumptions:
     G = 0 in a day: no loss to ground.
@@ -276,7 +255,7 @@ def calc_PET(s_rad, t_min, t_max, doy, alpha, elev, lat):
     # Actual vapor pressure estimated using min temperature - Equation 48 FAO-56 Allen et al. (1998
     avp = 0.611 * np.exp((17.27 * t_min) / (t_min + 237.3))
 
-    # Net outgoing longwave radiation - Equation 49 FAO-56 Allen et al. (1998)
+    # Net outgoing long wave radiation - Equation 49 FAO-56 Allen et al. (1998)
     term1 = ((t_max + 273.16) ** 4 + (t_min + 273.16) ** 4) / 2  # conversion in K in equation
     term2 = 0.34 - 0.14 * np.sqrt(avp)
     term3 = 1.35 * s_rad / cs_rad - 0.35
@@ -292,56 +271,6 @@ def calc_PET(s_rad, t_min, t_max, doy, alpha, elev, lat):
     t_mean = 0.5 * (t_min + t_max)
     s = 4098 * (0.6108 * np.exp((17.27 * t_mean) / (t_mean + 237.3))) / ((t_mean + 237.3) ** 2)
 
-    Rn = in_sw_rad - out_lw_rad
-    PET = ((alpha / LAMBDA) * s * (Rn - G)) / (s + gamma)
-    return PET * 0.408  # energy to evap
-# TODO add generate from ERA5 forcing dataset and Rhine.
-"""
-.. code-block:: python
-
-    from ewatercycle.forcing import sources
-    from ewatercycle.testing.fixtures import rhine_shape
-
-    shape = rhine_shape()
-    forcing = sources.MarrmotForcing.generate(
-        dataset='ERA5',
-        start_time='2000-01-01T00:00:00Z',
-        end_time='2001-01-01T00:00:00Z',
-        shape=shape,
-    )
-"""
-# def build_marrmot_recipe(
-#     start_year: int,
-#     end_year: int,
-#     shape: Path,
-#     dataset: Dataset | str | dict,
-# ) -> Recipe:
-#     """Build an ESMValTool recipe for generating forcing for MARRMoT.
-#
-#     Args:
-#         start_year: Start year of forcing.
-#         end_year: End year of forcing.
-#         shape: Path to a shape file. Used for spatial selection.
-#         dataset: Dataset to get forcing data from.
-#             When string is given a predefined dataset is looked up in
-#             :py:const:`ewatercycle.esmvaltool.datasets.DATASETS`.
-#             When dict given it is passed to
-#             :py:class:`ewatercycle.esmvaltool.models.Dataset` constructor.
-#     """
-#     return (
-#         RecipeBuilder()
-#         .title("Generate forcing for the MARRMoT hydrological model")
-#         .description("Generate forcing for the MARRMoT hydrological model")
-#         .dataset(dataset)
-#         .start(start_year)
-#         .end(end_year)
-#         .shape(shape)
-#         # TODO do lumping in recipe preprocessor instead of in diagnostic script
-#         # .lump()
-#         .add_variables(("tas", "pr", "psl", "rsds"))
-#         .add_variable("rsdt", mip="CFday")
-#         .script(
-#             str((Path(__file__).parent / "forcing_diagnostic_script.py").absolute()),
-#             {"basin": shape.stem})
-#         .build()
-#     )
+    rn = in_sw_rad - out_lw_rad
+    pet = ((alpha / LAMBDA) * s * (rn - G)) / (s + gamma)
+    return pet * 0.408  # energy to evap
