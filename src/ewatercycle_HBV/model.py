@@ -34,7 +34,7 @@ class HBVMethods(eWaterCycleModel):
         # do some basic test to check on forcing
         if self.forcing.test_data_bool:
             self.forcing.from_test_txt()
-        elif self.forcing.camel_txt_defined():
+        elif self.forcing.camels_txt_defined():
             self.forcing.from_camels_txt()
         elif self.forcing.forcing_nc_defined():
             pass # to do: quality check here in future rather than in model.
