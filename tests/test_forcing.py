@@ -1,5 +1,5 @@
 import numpy as np
-from ewatercycle_HBV.forcing import calc_PET
+from ewatercycle_HBV.forcing import calc_pet
 
 
 def test_calc_pet():
