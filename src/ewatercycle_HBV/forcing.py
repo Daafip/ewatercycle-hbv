@@ -97,7 +97,7 @@ class HBVForcing(DefaultForcing):
         names = ["year", "month", "day", "pr","Q", "pev"]
         df_in = pd.DataFrame(forcing, columns=names)
         df_in.index = df_in.apply(lambda x: pd.Timestamp(f'{int(x.year)}-{int(x.month)}-{int(x.day)}'), axis=1)
-        df_in.drop(columns=["year", "month", "day"], inplace=True)
+        df_in = df_in.drop(columns=["year", "month", "day"])
         df_in.index.name = "time"
         # TODO use netcdf-cf conventions
         ds = xr.Dataset(data_vars=df_in,
