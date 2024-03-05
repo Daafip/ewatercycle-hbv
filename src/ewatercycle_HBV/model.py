@@ -1,5 +1,6 @@
 """eWaterCycle wrapper for the HBV model."""
 import json
+import os.path
 import warnings
 from collections.abc import ItemsView
 from pathlib import Path
@@ -100,9 +101,14 @@ class HBVMethods(eWaterCycleModel):
             warnings.warn(message=f'Config folder not found at {self._cfg_dir.rmdir()}',category=UserWarning)
 
 
-        for file in ["potential_evaporation_file", "precipitation_file"]:
-            (self.forcing.directory / self._config[file]).unlink()
-
+        # NetCDF files created are timestamped and running them a lot creates many files, remove these
+        if self.forcing.camels_txt_defined() or self.forcing.test_data_bool:
+            for file in ["potential_evaporation_file", "precipitation_file"]:
+                path = self.forcing.directory / self._config[file]
+                if path.is_file(): # often both with be the same, e.g. with camels data.
+                    path.unlink()
+                else:
+                    pass
 
 class HBV(ContainerizedModel, HBVMethods):
     """The HBV eWaterCycle model, with the Container Registry docker image."""
