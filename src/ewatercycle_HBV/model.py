@@ -57,12 +57,7 @@ class HBVMethods(eWaterCycleModel):
         # self._config["temperature_max_file"] = str(
         #     self.forcing.directory / self.forcing.tasmax
         # )
-        if 'parameters' in kwargs:
-            self._config['parameters'] = kwargs['parameters']
-
-        if 'initial_storage' in kwargs:
-            self._config['initial_storage'] = kwargs['initial_storage']
-
+        
         for kwarg in kwargs:  # Write any kwargs to the config. - doesn't overwrite config?
             self._config[kwarg] = kwargs[kwarg]
 
