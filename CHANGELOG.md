@@ -22,4 +22,5 @@ Adding `.finalize()` method - clears up the directory. Especially useful for DA.
 - Refactor `forcing_file` attribute to `camel_file` -> as essentially it's now a txt file of specific class which the from_camels functions is run on in model startup
 - change selection of dataset period to be inclusive
 ### v.1.4.1 
-- changes to config file: alpha is not needed in model, only in forcing. 
+- changes to config file: alpha is not needed in model, only in forcing per definition. 
+- now removes any netcdf files created when using camels or test data
