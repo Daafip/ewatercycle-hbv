@@ -25,8 +25,7 @@ class HBVMethods(eWaterCycleModel):
         "potential_evaporation_file": "",
         "parameters": "",
         "initial_storage": "",
-        "alpha": 1.26,
-    }
+                        }
 
     def _make_cfg_file(self, **kwargs) -> Path:
         """Write model configuration file."""
@@ -58,6 +57,11 @@ class HBVMethods(eWaterCycleModel):
         # self._config["temperature_max_file"] = str(
         #     self.forcing.directory / self.forcing.tasmax
         # )
+        if 'parameters' in kwargs:
+            self._config['parameters'] = kwargs['parameters']
+
+        if 'initial_storage' in kwargs:
+            self._config['initial_storage'] = kwargs['initial_storage']
 
         for kwarg in kwargs:  # Write any kwargs to the config.
             self._config[kwarg] = kwargs[kwarg]
@@ -87,13 +91,6 @@ class HBVMethods(eWaterCycleModel):
         self._bmi.finalize()
         del self._bmi
 
-        # TODO: remove data set file
-        # TODO maybe change this time aspect? can get quite large - or simply remove in finalize
-        # ds_name = f"HBV_forcing_CAMELS_{time}.nc"
-        # out_dir = self.directory / ds_name
-        # if not out_dir.exists():
-        #     ds.to_netcdf(out_dir)
-
         try:
             # remove config file
             config_file = self._cfg_dir / "HBV_config.json"
@@ -109,7 +106,8 @@ class HBVMethods(eWaterCycleModel):
 
 
         for file in ["potential_evaporation_file", "precipitation_file"]:
-            self._config[file]
+            self._config[file].unlink()
+
 
 class HBV(ContainerizedModel, HBVMethods):
     """The HBV eWaterCycle model, with the Container Registry docker image."""
