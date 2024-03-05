@@ -27,6 +27,9 @@ from ewatercycle.models import HBV
 
 For more information on how this plugin works, and on how to implement your own model see the [plugin guide](https://github.com/eWaterCycle/ewatercycle-leakybucket/blob/main/plugin_guide.md)
 
+## Changelog
+Changes can be found in [CHANGELOG.md](https://github.com/Daafip/ewatercycle-hbv/blob/main/CHANGELOG.md) on GitHub
+
 ## License
 
 This is a `ewatercycle-plugin` & thus this is distributed under the same terms as the template: the [Apache-2.0](https://spdx.org/licenses/Apache-2.0.html) license.
