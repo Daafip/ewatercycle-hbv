@@ -57,7 +57,7 @@ class HBVMethods(eWaterCycleModel):
         # self._config["temperature_max_file"] = str(
         #     self.forcing.directory / self.forcing.tasmax
         # )
-        
+
         for kwarg in kwargs:  # Write any kwargs to the config. - doesn't overwrite config?
             self._config[kwarg] = kwargs[kwarg]
 
@@ -101,7 +101,7 @@ class HBVMethods(eWaterCycleModel):
 
 
         for file in ["potential_evaporation_file", "precipitation_file"]:
-            self._config[file].unlink()
+            self.forcing.directory / self._config[file].unlink()
 
 
 class HBV(ContainerizedModel, HBVMethods):
