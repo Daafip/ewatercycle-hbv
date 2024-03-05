@@ -63,7 +63,7 @@ class HBVMethods(eWaterCycleModel):
         if 'initial_storage' in kwargs:
             self._config['initial_storage'] = kwargs['initial_storage']
 
-        for kwarg in kwargs:  # Write any kwargs to the config.
+        for kwarg in kwargs:  # Write any kwargs to the config. - doesn't overwrite config?
             self._config[kwarg] = kwargs[kwarg]
 
         config_file = self._cfg_dir / "HBV_config.json"

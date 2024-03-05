@@ -21,3 +21,5 @@ Adding `.finalize()` method - clears up the directory. Especially useful for DA.
 ### v1.4.0
 - Refactor `forcing_file` attribute to `camel_file` -> as essentially its now a txt file of specific class which the from_camels functions is run on in model startup
 - change selection of dataset period to be inclusive
+### v.1.4.1 
+- changes to config file to allow kwargs to be passed
