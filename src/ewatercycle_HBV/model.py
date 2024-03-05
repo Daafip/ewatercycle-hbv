@@ -101,7 +101,7 @@ class HBVMethods(eWaterCycleModel):
 
 
         for file in ["potential_evaporation_file", "precipitation_file"]:
-            self.forcing.directory / self._config[file].unlink()
+            (self.forcing.directory / self._config[file]).unlink()
 
 
 class HBV(ContainerizedModel, HBVMethods):
