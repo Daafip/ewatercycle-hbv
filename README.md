@@ -23,13 +23,15 @@ Then HBV becomes available as one of the eWaterCycle models
 ```python
 from ewatercycle.models import HBV
 ```
+## documentation
+Some basic documentation can be found [here](https://ewatercycle-hbv.readthedocs.io/en/latest/index.html)
+
+## Changelog
+Changes can be found in [CHANGELOG.md](https://github.com/Daafip/ewatercycle-hbv/blob/main/CHANGELOG.md) on GitHub
 
 ## Implementing your own model
 
 For more information on how this plugin works, and on how to implement your own model see the [plugin guide](https://github.com/eWaterCycle/ewatercycle-leakybucket/blob/main/plugin_guide.md)
-
-## Changelog
-Changes can be found in [CHANGELOG.md](https://github.com/Daafip/ewatercycle-hbv/blob/main/CHANGELOG.md) on GitHub
 
 ## License
 
