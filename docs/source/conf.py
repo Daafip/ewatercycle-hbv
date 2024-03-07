@@ -20,10 +20,20 @@ extensions = [
             ]
 
 templates_path = ['_templates']
-exclude_patterns = []
+
+exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "**.ipynb_checkpoints"]
+
+# The name of the Pygments (syntax highlighting) style to use.
+pygments_style = "sphinx"
 
 source_suffix = [".rst"]
 
+html_sidebars = {
+    "**": [
+        "relations.html",  # needs 'show_related': True theme option to display
+        "searchbox.html",
+    ]
+}
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
