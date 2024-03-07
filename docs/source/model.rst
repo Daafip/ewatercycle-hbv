@@ -16,3 +16,6 @@ This current implementation is *without* a snow reservoir as shown in the diagra
    :width: 600
    :alt: `Link <https://github.com/Daafip/HBV-bmi/blob/main/model_layout.png?raw=true>`_
 
+This implementation of the model uses a Markov Chain structure to allow it to be compatible with `Data Assimilation<https://github.com/Daafip/eWaterCycle-DA>`_.
+Testing it compared to a normal implementation showed this doesn't affect how the model performs.
+
