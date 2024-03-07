@@ -9,7 +9,9 @@
 project = 'eWaterCycle-HBV'
 copyright = '2024, David Haasnoot'
 author = 'David Haasnoot'
-release = '\x1b[A\x1b[F\x1b[B\x1b[B\x1b[F\x1b[B\x1b[B'
+
+version = "1.4"
+release = version
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -34,6 +36,13 @@ html_sidebars = {
         "searchbox.html",
     ]
 }
+
+# Hacky way to 'remove' the cell count from the prompt.
+# Inspired by https://github.com/spatialaudio/nbsphinx/issues/126
+nbsphinx_prompt_width = "0"
+nbsphinx_input_prompt = "%s         In:"
+nbsphinx_output_prompt = "%s       Out:"
+
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

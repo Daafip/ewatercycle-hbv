@@ -1,9 +1,12 @@
 # eWaterCycle plugin - HBV
 
+[![Python package](https://github.com/Daafip/ewatercycle-hbv/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/Daafip/ewatercycle-hbv/actions/workflows/test.yml)
+[![docs badge](https://readthedocs.org/projects/ewatercycle-hbv/badge/?version=latest)](https://ewatercycle-hbv.readthedocs.io/en/latest/index.html)
 [![PyPI](https://img.shields.io/pypi/v/ewatercycle-HBV)](https://pypi.org/project/ewatercycle-HBV/)
 [![github license badge](https://img.shields.io/github/license/Daafip/ewatercycle-hbv)](https://github.com/Daafip/ewatercycle-hbv)
 [![fair-software badge](https://img.shields.io/badge/fair--software.eu-%E2%97%8F%20%20%E2%97%8F%20%20%E2%97%8B%20%20%E2%97%8B%20%20%E2%97%8B-yellow)](https://fair-software.eu)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=Daafip_ewatercycle-hbv&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=Daafip_ewatercycle-hbv)
+
 
 This package is based on the [Leaky bucket](https://github.com/eWaterCycle/ewatercycle-leakybucket/tree/main) & is a wrapper for the [HBV-bmi](https://github.com/Daafip/HBV-bmi) model. 
 
@@ -23,7 +26,7 @@ Then HBV becomes available as one of the eWaterCycle models
 ```python
 from ewatercycle.models import HBV
 ```
-## documentation
+## Documentation
 Some basic documentation can be found [here](https://ewatercycle-hbv.readthedocs.io/en/latest/index.html)
 
 ## Changelog
