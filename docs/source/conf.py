@@ -18,7 +18,8 @@ release = version
 
 extensions = [
                 'sphinx.ext.autodoc',
-                "nbsphinx",
+                "nbsphinx"
+                "autoapi.extension",
             ]
 
 templates_path = ['_templates']
