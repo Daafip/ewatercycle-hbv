@@ -23,7 +23,7 @@ Then HBV becomes available as one of the eWaterCycle models
 ```python
 from ewatercycle.models import HBV
 ```
-## documentation
+## Documentation
 Some basic documentation can be found [here](https://ewatercycle-hbv.readthedocs.io/en/latest/index.html)
 
 ## Changelog
