@@ -18,7 +18,7 @@ release = version
 
 extensions = [
                 'sphinx.ext.autodoc',
-                "nbsphinx"
+                "nbsphinx",
                 "autoapi.extension",
             ]
 
