@@ -53,6 +53,6 @@ html_static_path = ['_static']
 
 
 # -- Use autoapi.extension to run sphinx-apidoc -------
-autoapi_dirs = ["../../src"]
+autoapi_dirs = ["../src"]
 autoapi_python_class_content = "both"
 autoapi_options = ["members", "undoc-members", "imported-members", "show-inheritance"]
