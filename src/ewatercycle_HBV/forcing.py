@@ -1,4 +1,4 @@
-"""Forcing related functionality for HBV."""
+"""Forcing related functionality for HBV, see `eWaterCyle documentation <https://ewatercycle.readthedocs.io/en/latest/autoapi/ewatercycle/base/forcing/index.html>`_ for more detail."""
 # Based on https://github.com/eWaterCycle/ewatercycle-marrmot/blob/main/src/ewatercycle_marrmot/forcing.py
 
 from datetime import datetime
@@ -14,19 +14,13 @@ from ewatercycle.base.forcing import DefaultForcing
 class HBVForcing(DefaultForcing):
     """Container for HBV forcing data.
 
-    Attributes:
-        directory: Directory where forcing data files are stored.
-        start_time: Start time of forcing in UTC and ISO format string e.g.
-            'YYYY-MM-DDTHH:MM:SSZ'.
-        end_time: End time of forcing in UTC and ISO format string e.g.
-            'YYYY-MM-DDTHH:MM:SSZ'.
-        shape: Path to a shape file. Used for spatial selection.
-        camels_file: .txt file that contains CAMELS forcings from https://hess.copernicus.org/articles/21/5293/2017/
-        pr: a NetCDF (.nc) file containing precipitation - ensure yourself that these already match start_time & end time
-        pr: a NetCDF (.nc) file containing precipitation
+    Args:
+        camels_file: .txt file that contains CAMELS forcing from https://hess.copernicus.org/articles/21/5293/2017/
+        pr: Path to a NetCDF (.nc) file containing precipitation - ensure yourself that these already match start_time & end time
+        pev: Path to a NetCDF (.nc) file containing potential evaporation
         alpha: float provided in camels dataset but not in the forcing file, instead in the model results.
-        test_data_bool: False by default, set True if instead of a camels file, a test files is passed for HBV including precipitation and evaporation
-                    contains columns: ["year", "month", "day", "pr", "pev"] seperated by a space
+        test_data_bool: False by default, set True if instead of a camels file, a test files is passed for HBV including precipitation and evaporation contains columns: ["year", "month", "day", "pr", "pev"] seperated by a space
+
     Examples:
 
         From existing forcing data:
@@ -43,10 +37,10 @@ class HBVForcing(DefaultForcing):
                 alpha = 1.20
             )
 
-        ------------------------------------
         Or provide forcing yourself as a NetCDF file
 
         .. code-block:: python
+
             forcing = sources.HBVForcing(
                 directory='/home/davidhaasnoot/Code/Forcing/',
                 start_time='1997-08-01T00:00:00Z',
@@ -55,8 +49,14 @@ class HBVForcing(DefaultForcing):
                 pev="potential_evaporation_file.nc"
             )
 
-        where precipitation_file & potential_evaporation_file can be the same aslong as
-        they contain a 'pr' & 'pev' variable
+        where :py:const:`precipitation_file` &  :py:const:`potential_evaporation_file` can be the same aslong as
+        they contain a  :py:const:`pr` &  :py:const:`pev` variable
+
+        Inherited from base forcing:
+            shape: Path to a shape file. Used for spatial selection.
+            directory: Directory where forcing data files are stored.
+            start_time: Start time of forcing in UTC and ISO format string e.g 'YYYY-MM-DDTHH:MM:SSZ'.
+            end_time: End time of forcing in UTC and ISO format string e.g. 'YYYY-MM-DDTHH:MM:SSZ'.
 
     """
 
@@ -69,14 +69,14 @@ class HBVForcing(DefaultForcing):
     test_data_bool: bool = False # allows to use self.from_test_txt()
 
     def camels_txt_defined(self):
-        """""test whether user defined forcing file"""
+        """test whether user defined forcing file, used converting text forcing file to netcdf"""
         if len(self.camels_file) > 4:
             return True
         else:
             return False
 
     def forcing_nc_defined(self):
-        """""test whether user defined forcing file"""
+        """test whether user defined forcing file"""
         if (len(self.pr) > 3) and (len(self.pev) > 3):
             return True
         else:
@@ -84,11 +84,17 @@ class HBVForcing(DefaultForcing):
     # TODO Implement this to take .txt and add them?
     def from_test_txt(self) -> xr.Dataset:
         """Load forcing data from a txt file into an xarray dataset.
-        Must contain ["year", "month", "day", "pr","Q", "pev"] in columns
-        Will convert date to pandas.Timestamp()
-        pr (precipitation), Q (discharge), pev (potential evaportaion) - all im mm's
+
+        Information:
+            Must contain ["year", "month", "day", "pr","Q", "pev"] in columns
+
+            Will convert date to pandas.Timestamp()
+
+            pr (precipitation), Q (discharge), pev (potential evaportaion) - all im mm's
+
         Returns:
-            Dataset with forcing data.
+            ds: xr.Dataset
+                Dataset with forcing data.
         """
         if self.directory is None or self.camels_file is None:
             raise ValueError("Directory or camels_file is not set")
@@ -117,14 +123,23 @@ class HBVForcing(DefaultForcing):
 
     def from_camels_txt(self) -> xr.Dataset:
         """Load forcing data from a txt file into an xarray dataset.
-        Must be in the same format as the CAMELS dataset:
-        3 lines containing: lat, elevation and area.
-        4th line with headers: 'Year Mnth Day Hr dayl(s) prcp(mm/day) srad(W/m2) swe(mm) tmax(C) tmin(C) vp(Pa)'
-        Takes from the 5th line onwards with \t delimiter.
-        Will convert date to pandas.Timestamp()
-        Then convert from pandas to a xarray.
+
+        Requirements:
+            Must be in the same format as the CAMELS dataset:
+
+            3 lines containing: lat, elevation and area.
+
+            4th line with headers: 'Year Mnth Day Hr dayl(s) prcp(mm/day) srad(W/m2) swe(mm) tmax(C) tmin(C) vp(Pa)'
+
+            Takes from the 5th line onwards with \t delimiter.
+
+            Will convert date to pandas.Timestamp()
+
+            Then convert from pandas to a xarray.
+
         Returns:
-            Dataset with forcing data.
+            ds: xr.Dataset
+                Dataset with forcing data.
         """
         if self.directory is None or self.camels_file is None:
             raise ValueError("Directory or camels_file is not set")
@@ -199,30 +214,39 @@ class HBVForcing(DefaultForcing):
         self.pr = ds_name  # these are appended in model.py
         return ds
 
-def calc_pet(s_rad, t_min, t_max, doy, alpha, elev, lat):
-    """
-    calculates Potential Evaporation using Priestly–Taylor PET estimate, callibrated with longterm P-T trends from the camels data set (alpha).
-    -------
-    args:
-        Rn: net radiation estimate in W/m^2: converted to J/m^2/d
-        s: (aka delta), is the slope of the saturation vapor pressure relationship in kPa/degC
-        alpha: factor callibrated from longterm P-T trend compensating for lack of other data.
+def calc_pet(s_rad, t_min, t_max, doy, alpha, elev, lat) -> np.ndarray:
+    """Calculates Potential Evaporation using Priestly–Taylor PET estimate, callibrated with longterm P-T trends from the camels data set (alpha).
 
-    -------
+    Parameters:
+        s_rad: np.ndarray
+            net radiation estimate in W/m^2. Function converts this to J/m^2/d
+        t_min: np.ndarray
+            daily minimum temperature (degree C)
+        t_max: np.ndarray
+            daily maximum temperature (degree C)
+        doy: np.ndarray
+            day of year: use `xt.DataArray.dt.dayofyear` - used to approximate daylight amount
+        alpha: float
+            factor callibrated from longterm P-T trend compensating for lack of other data.
+        elev: float
+            elevation in m as provided by camels
+        lat: float
+            latitude in degree
+
     Assumptions:
-    G = 0 in a day: no loss to ground.
+        G = 0 in a day: no loss to ground.
 
-    -------
-    reference:
+    Returns:
+        pet: np.ndarray
+            Array containing PET estimates in mm/day
 
-    based on code from:
-    https://github.com/neuralhydrology/neuralhydrology/blob/master/neuralhydrology/datautils/pet.py
-    kratzert et al. 2022
-    NeuralHydrology --- A Python library for Deep Learning research in hydrology,
-    Frederik Kratzert and Martin Gauch and Grey Nearing and Daniel Klotz,
-    https://doi.org/10.21105/joss.04050
-
-    Who base on allen et al. (1998) 'FOA 56' & Newman et al (2015) 'CAMELS dataset'
+    Reference:
+        based on code from:
+                kratzert et al. 2022
+                `NeuralHydrology --- A Python library for Deep Learning research in hydrology,
+                Frederik Kratzert and Martin Gauch and Grey Nearing and Daniel Klotz <https://github.com/neuralhydrology/neuralhydrology/blob/master/neuralhydrology/datautils/pet.py>`_
+                https://doi.org/10.21105/joss.04050
+        Who base on `allen et al. (1998) 'FOA 56' <https://appgeodb.nancy.inra.fr/biljou/pdf/Allen_FAO1998.pdf>`_ & `Newman et al (2015) <https://hess.copernicus.org/articles/21/5293/2017/>`_
 
     """
     G = 0
