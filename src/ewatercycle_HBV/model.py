@@ -131,7 +131,7 @@ class HBVMethods(eWaterCycleModel):
             Ss (mm): Groundwater storage, moving Slowly through the soil - deeper grounds water.
 
         """
-        pars: dict[str, Any] = dict(zip(HBV_STATES, self._config["states"].split(',')))
+        pars: dict[str, Any] = dict(zip(HBV_STATES, self._config["initial_storage"].split(',')))
         return pars.items()
 
 
