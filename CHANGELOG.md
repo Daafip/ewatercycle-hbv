@@ -27,4 +27,4 @@ Adding `.finalize()` method - clears up the directory. Especially useful for DA.
 #### v.1.4.2
 - updated parameter function to return nicely formated parameter dict
 ### 1.5.0
-- changes output model parameter from `Q_m` to `Q`!!! **this is not backward compatible**
+- changes output model parameter from `Q_m` to `Q`!!! **this is not backward compatible*
