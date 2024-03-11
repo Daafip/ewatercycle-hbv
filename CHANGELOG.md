@@ -24,3 +24,5 @@ Adding `.finalize()` method - clears up the directory. Especially useful for DA.
 ### v.1.4.1 
 - changes to config file: alpha is not needed in model, only in forcing per definition. 
 - now removes any netcdf files created when using camels or test data
+### v.1.4.2
+- updated parameter function to return nicely formated parameter dict
