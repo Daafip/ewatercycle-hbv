@@ -173,5 +173,5 @@ class HBVMethods(eWaterCycleModel):
 class HBV(ContainerizedModel, HBVMethods):
     """The HBV eWaterCycle model, with the Container Registry docker image."""
     bmi_image: ContainerImage = ContainerImage(
-        "ghcr.io/daafip/hbv-bmi-grpc4bmi:v1.3.0"
+        "ghcr.io/daafip/hbv-bmi-grpc4bmi:v1.3.1"
     )
