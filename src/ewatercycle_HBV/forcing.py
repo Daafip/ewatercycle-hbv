@@ -211,7 +211,7 @@ class HBVForcing(DefaultForcing):
 
         # often same file
         if self.pr == self.pev:
-            ds = xr.open_dataset(self.pr)
+            ds = xr.open_dataset(self.directory / self.pr)
 
             if sum([key in ds.data_vars for key in RENAME_CAMELS.keys()]) == len(RENAME_CAMELS):
                 ds = ds.rename(RENAME_CAMELS)
@@ -223,8 +223,8 @@ class HBVForcing(DefaultForcing):
 
         else:
             # but can also seperate
-            ds_pr = xr.open_dataset(self.pr)
-            ds_pev = xr.open_dataset(self.pev)
+            ds_pr = xr.open_dataset(self.directory / self.pr)
+            ds_pev = xr.open_dataset(self.directory / self.pev)
             combined_data_vars = list(ds_pr.data_vars) + list(ds_pev.data_vars)
             if not sum([param in combined_data_vars for param in REQUIRED_PARAMS]) == len(REQUIRED_PARAMS):
                 raise UserWarning(f"Supplied NetCDF files must contain {REQUIRED_PARAMS} respectively")
