@@ -216,6 +216,7 @@ class HBVForcing(DefaultForcing):
             if sum([key in ds.data_vars for key in RENAME_CAMELS.keys()]) == len(RENAME_CAMELS):
                 ds = ds.rename(RENAME_CAMELS)
                 ds = ds.rename_dims({'date': 'time'})
+                ds = ds.rename({'date': 'time'})
 
             ds, ds_name = self.crop_ds(ds, "external")
             self.pev = ds_name
