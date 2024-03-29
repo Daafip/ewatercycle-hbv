@@ -32,5 +32,7 @@ Adding `.finalize()` method - clears up the directory. Especially useful for DA.
 - fix bug/implementation error with time indexing, docker image version 1.3.1
 #### 1.5.2
 - typo in bmi implementation: docker image 1.3.2
-#### 1.6.0
-  - now compatible with ewatercycle V2.1 `LumpedMakkinkForcing` which generates evaporation from era5/CMIP. 
+### 1.6.0
+  - now compatible with ewatercycle V2.1 `LumpedMakkinkForcing` which generates evaporation from era5/CMIP.
+#### 1.6.1
+  - bug fix occuring when loading makkink data
