@@ -1,12 +1,14 @@
 """eWaterCycle wrapper for the HBV model."""
 import json
-import os.path
+import xarray as xr
 import warnings
 from collections.abc import ItemsView
 from pathlib import Path
 from typing import Any, Type
 
-from ewatercycle.base.forcing import GenericLumpedForcing # or later Use custom forcing instead?
+from ewatercycle.forcing import LumpedMakkinkForcing
+from ewatercycle.forcing import GenericLumpedForcing
+
 from ewatercycle_HBV.forcing import HBVForcing # Use custom forcing instead
 from ewatercycle.base.model import ContainerizedModel, eWaterCycleModel
 from ewatercycle.container import ContainerImage
@@ -32,10 +34,9 @@ HBV_STATES = (
 class HBVMethods(eWaterCycleModel):
     """
     The eWatercycle HBV model.
-    
-
     """
-    forcing: HBVForcing  # The model requires forcing.
+
+    forcing: LumpedMakkinkForcing|HBVForcing|GenericLumpedForcing  # The model requires forcing.
     parameter_set: None  # The model has no parameter set.
 
     _config: dict = {
@@ -49,22 +50,52 @@ class HBVMethods(eWaterCycleModel):
         """Write model configuration file."""
 
         # do some basic test to check on forcing
-        if self.forcing.test_data_bool:
-            self.forcing.from_test_txt()
-        elif self.forcing.camels_txt_defined():
-            self.forcing.from_camels_txt()
-        elif self.forcing.forcing_nc_defined():
-            self.forcing.from_external_source()
-        else:
-            raise UserWarning("Ensure either a txt file with camels data or an(/set of) xarrays is defined")
+        if type(self.forcing).__name__ == 'HBVForcing':
+            if self.forcing.test_data_bool:
+                self.forcing.from_test_txt()
+            elif self.forcing.camels_txt_defined():
+                self.forcing.from_camels_txt()
+            elif self.forcing.forcing_nc_defined():
+                self.forcing.from_external_source()
+            else:
+                raise UserWarning("Ensure either a txt file with camels data or an(/set of) xarrays is defined")
 
-        self._config["precipitation_file"] = str(
-            self.forcing.directory / self.forcing.pr
-        )
+            self._config["precipitation_file"] = str(
+                self.forcing.directory / self.forcing.pr
+            )
 
-        self._config["potential_evaporation_file"] = str(
-            self.forcing.directory / self.forcing.pev
-        )
+            self._config["potential_evaporation_file"] = str(
+                self.forcing.directory / self.forcing.pev
+            )
+
+        elif type(self.forcing).__name__ == 'GenericLumpedForcing':
+                raise UserWarning("Generic Lumped Forcing does not provide potential evaporation, which this model needs")
+
+        elif type(self.forcing).__name__ == 'LumpedMakkinkForcing':
+            ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['evspsblpot'])
+            attributes = ds['evspsblpot'].attrs
+            attributes['units'] = 'mm'
+            ds = ds.rename({'evspsblpot': 'pev'})
+            ds['pev'] = ds['pev'] * 86400
+            ds['pev'].attrs = attributes
+            temporary_pev_file =  self.forcing.directory / self.forcing.filenames['evspsblpot'].replace('evspsblpot', 'pev_mm')
+            ds.to_netcdf(temporary_pev_file)
+
+            ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['pr'])
+            attributes = ds['pr'].attrs
+            attributes['units'] = 'mm'
+            ds['pr'] = ds['pr'] * 86400
+            ds['pr'].attrs = attributes
+            temporary_pr_file =  self.forcing.directory / self.forcing.filenames['pr'].replace('pr', 'pr_mm')
+            ds.to_netcdf(temporary_pr_file)
+
+            self._config["precipitation_file"] = str(
+                temporary_pr_file
+            )
+            self._config["potential_evaporation_file"] = str(
+                temporary_pev_file
+            )
+
         ## possibly add later for snow?
         # self._config["temperature_file"] = str(
         #     self.forcing.directory / self.forcing.tas
@@ -160,15 +191,22 @@ class HBVMethods(eWaterCycleModel):
         except FileNotFoundError:
             warnings.warn(message=f'Config folder not found at {self._cfg_dir.rmdir()}',category=UserWarning)
 
+        if type(self.forcing).__name__ == 'HBVForcing':
+            # NetCDF files created are timestamped and running them a lot creates many files, remove these
+            if self.forcing.camels_txt_defined() or self.forcing.test_data_bool:
+                self.unlink()
 
-        # NetCDF files created are timestamped and running them a lot creates many files, remove these
-        if self.forcing.camels_txt_defined() or self.forcing.test_data_bool:
-            for file in ["potential_evaporation_file", "precipitation_file"]:
-                path = self.forcing.directory / self._config[file]
-                if path.is_file(): # often both with be the same, e.g. with camels data.
-                    path.unlink()
-                else:
-                    pass
+        elif type(self.forcing).__name__ == 'LumpedMakkinkForcing':
+            # we created a temporary file so let's unlink that
+            self.unlink()
+
+    def unlink(self):
+        for file in ["potential_evaporation_file", "precipitation_file"]:
+            path = self.forcing.directory / self._config[file]
+            if path.is_file():  # often both with be the same, e.g. with camels data.
+                path.unlink()
+            else:
+                pass
 
 class HBV(ContainerizedModel, HBVMethods):
     """The HBV eWaterCycle model, with the Container Registry docker image."""

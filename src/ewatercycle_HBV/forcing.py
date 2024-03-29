@@ -103,7 +103,7 @@ class HBVForcing(DefaultForcing):
                 Dataset with forcing data.
         """
         if self.directory is None or self.camels_file is None:
-            raise ValueError("Directory or camels_file is not set")
+            self.file_not_found_error()
         fn = self.directory / self.camels_file
         forcing = np.loadtxt(fn, delimiter="	")
         names = ["year", "month", "day", "pr","Q", "pev"]
@@ -144,7 +144,7 @@ class HBVForcing(DefaultForcing):
                 Dataset with forcing data.
         """
         if self.directory is None or self.camels_file is None:
-            raise ValueError("Directory or camels_file is not set")
+            self.file_not_found_error()
         fn = self.directory / self.camels_file
         data = {}
         with open(fn, 'r') as fin:
@@ -206,8 +206,9 @@ class HBVForcing(DefaultForcing):
         return ds
 
     def from_external_source(self):
+        """Runs checks on externally provided forcing"""
         if None in [self.directory, self.pr, self.pev]:
-            raise ValueError("Directory or camels_file is not set")
+            self.file_not_found_error()
 
         # often same file
         if self.pr == self.pev:
@@ -228,7 +229,7 @@ class HBVForcing(DefaultForcing):
             ds_pr = xr.open_dataset(self.directory / self.pr)
             ds_pev = xr.open_dataset(self.directory / self.pev)
             combined_data_vars = list(ds_pr.data_vars) + list(ds_pev.data_vars)
-            if not sum([param in combined_data_vars for param in REQUIRED_PARAMS]) == len(REQUIRED_PARAMS):
+            if sum([param in combined_data_vars for param in REQUIRED_PARAMS]) != len(REQUIRED_PARAMS):
                 raise UserWarning(f"Supplied NetCDF files must contain {REQUIRED_PARAMS} respectively")
 
             ds_pr, ds_name_pr = self.crop_ds(ds_pr, "external")
@@ -252,6 +253,9 @@ class HBVForcing(DefaultForcing):
             ds.to_netcdf(out_dir)
 
         return ds, ds_name
+
+    def file_not_found_error(self):
+        raise ValueError("Directory, camels_file or pr & pev values is not set correctly")
 
 def calc_pet(s_rad, t_min, t_max, doy, alpha, elev, lat) -> np.ndarray:
     """Calculates Potential Evaporation using Priestly–Taylor PET estimate, callibrated with longterm P-T trends from the camels data set (alpha).
