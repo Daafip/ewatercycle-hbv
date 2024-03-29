@@ -2,6 +2,7 @@
 import json
 import xarray as xr
 import warnings
+import os
 from collections.abc import ItemsView
 from pathlib import Path
 from typing import Any, Type
@@ -72,22 +73,27 @@ class HBVMethods(eWaterCycleModel):
                 raise UserWarning("Generic Lumped Forcing does not provide potential evaporation, which this model needs")
 
         elif type(self.forcing).__name__ == 'LumpedMakkinkForcing':
-            ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['evspsblpot'])
-            attributes = ds['evspsblpot'].attrs
-            attributes['units'] = 'mm'
-            ds = ds.rename({'evspsblpot': 'pev'})
-            ds['pev'] = ds['pev'] * 86400
-            ds['pev'].attrs = attributes
-            temporary_pev_file =  self.forcing.directory / self.forcing.filenames['evspsblpot'].replace('evspsblpot', 'pev_mm')
-            ds.to_netcdf(temporary_pev_file)
+            temporary_pev_file = self.forcing.directory / self.forcing.filenames['evspsblpot'].replace('evspsblpot',
+                                                                                                       'pev_mm')
+            if not temporary_pev_file.is_file():
+                ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['evspsblpot'])
+                attributes = ds['evspsblpot'].attrs
+                attributes['units'] = 'mm'
+                ds = ds.rename({'evspsblpot': 'pev'})
+                ds['pev'] = ds['pev'] * 86400
+                ds['pev'].attrs = attributes
+                ds.to_netcdf(temporary_pev_file)
+                ds.close()
 
-            ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['pr'])
-            attributes = ds['pr'].attrs
-            attributes['units'] = 'mm'
-            ds['pr'] = ds['pr'] * 86400
-            ds['pr'].attrs = attributes
-            temporary_pr_file =  self.forcing.directory / self.forcing.filenames['pr'].replace('pr', 'pr_mm')
-            ds.to_netcdf(temporary_pr_file)
+            temporary_pr_file = self.forcing.directory / self.forcing.filenames['pr'].replace('pr', 'pr_mm')
+            if not temporary_pr_file.is_file():
+                ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['pr'])
+                attributes = ds['pr'].attrs
+                attributes['units'] = 'mm'
+                ds['pr'] = ds['pr'] * 86400
+                ds['pr'].attrs = attributes
+                ds.to_netcdf(temporary_pr_file)
+                ds.close()
 
             self._config["precipitation_file"] = str(
                 temporary_pr_file
