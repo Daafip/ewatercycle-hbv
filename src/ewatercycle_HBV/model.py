@@ -80,6 +80,7 @@ class HBVMethods(eWaterCycleModel):
             ds['pev'].attrs = attributes
             temporary_pev_file =  self.forcing.directory / self.forcing.filenames['evspsblpot'].replace('evspsblpot', 'pev_mm')
             ds.to_netcdf(temporary_pev_file)
+            ds.close()
 
             ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['pr'])
             attributes = ds['pr'].attrs
@@ -88,6 +89,7 @@ class HBVMethods(eWaterCycleModel):
             ds['pr'].attrs = attributes
             temporary_pr_file =  self.forcing.directory / self.forcing.filenames['pr'].replace('pr', 'pr_mm')
             ds.to_netcdf(temporary_pr_file)
+            ds.close()
 
             self._config["precipitation_file"] = str(
                 temporary_pr_file
