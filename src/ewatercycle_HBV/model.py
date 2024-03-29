@@ -78,11 +78,19 @@ class HBVMethods(eWaterCycleModel):
             ds = ds.rename({'evspsblpot': 'pev'})
             ds['pev'] = ds['pev'] * 86400
             ds['pev'].attrs = attributes
-            temporary_pev_file = self.forcing.directory / self.forcing.filenames['evspsblpot'].replace('evspsblpot', 'pev')
-            ds.to_netcdf(temporary_pev_file)
+            temporary_pev_file =  self.forcing.filenames['evspsblpot'].replace('evspsblpot', 'pev_mm')
+            ds.to_netcdf(self.forcing.directory / temporary_pev_file)
+
+            ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['pr'])
+            attributes = ds['pr'].attrs
+            attributes['units'] = 'mm'
+            ds['pr'] = ds['pr'] * 86400
+            ds['pr'].attrs = attributes
+            temporary_pr_file =  self.forcing.filenames['pr'].replace('pr', 'pr_mm')
+            ds.to_netcdf(self.forcing.directory / temporary_pr_file)
 
             self._config["precipitation_file"] = str(
-                self.forcing["pr"]
+                temporary_pr_file
             )
             self._config["potential_evaporation_file"] = str(
                 temporary_pev_file
@@ -186,23 +194,19 @@ class HBVMethods(eWaterCycleModel):
         if type(self.forcing).__name__ == 'HBVForcing':
             # NetCDF files created are timestamped and running them a lot creates many files, remove these
             if self.forcing.camels_txt_defined() or self.forcing.test_data_bool:
-                for file in ["potential_evaporation_file", "precipitation_file"]:
-                    path = self.forcing.directory / self._config[file]
-                    if path.is_file(): # often both with be the same, e.g. with camels data.
-                        path.unlink()
-                    else:
-                        pass
+                self.unlink()
 
         elif type(self.forcing).__name__ == 'LumpedMakkinkForcing':
             # we created a temporary file so let's unlink that
-            for file in ["potential_evaporation_file"]:
-                path = self.forcing.directory / self._config[file]
-                if path.is_file():  # often both with be the same, e.g. with camels data.
-                    path.unlink()
-                else:
-                    pass
+            self.unlink()
 
-
+    def unlink(self):
+        for file in ["potential_evaporation_file", "precipitation_file"]:
+            path = self.forcing.directory / self._config[file]
+            if path.is_file():  # often both with be the same, e.g. with camels data.
+                path.unlink()
+            else:
+                pass
 
 class HBV(ContainerizedModel, HBVMethods):
     """The HBV eWaterCycle model, with the Container Registry docker image."""
