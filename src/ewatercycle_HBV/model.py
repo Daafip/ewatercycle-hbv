@@ -99,6 +99,15 @@ class HBVMethods(eWaterCycleModel):
                 ds.to_netcdf(temporary_pr_file)
                 ds.close()
 
+            temporary_tasmean_file = self.forcing.directory / self.forcing.filenames['tas'].replace('tas', 'tasmean')
+            if not temporary_pr_file.is_file():
+                ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['tas'])
+                attributes = ds['tas'].attrs
+                ds['tasmean'] = ds['tas']
+                ds['tasmean'].attrs = attributes
+                ds.to_netcdf(temporary_tasmean_file)
+                ds.close()
+
             self._config["precipitation_file"] = str(
                 temporary_pr_file
             )
@@ -107,7 +116,7 @@ class HBVMethods(eWaterCycleModel):
             )
 
             self._config["mean_temperature_file"] = str(
-                self.forcing.directory / self.forcing.filenames['tas']
+                temporary_tasmean_file
             )
 
         for kwarg in kwargs:  # Write any kwargs to the config. - doesn't overwrite config?
@@ -207,7 +216,7 @@ class HBVMethods(eWaterCycleModel):
             self.unlink()
 
     def unlink(self):
-        for file in ["potential_evaporation_file", "precipitation_file"]:
+        for file in ["potential_evaporation_file", "precipitation_file","mean_temperature_file"]:
             path = self.forcing.directory / self._config[file]
             if path.is_file():  # often both with be the same, e.g. with camels data.
                 path.unlink()
