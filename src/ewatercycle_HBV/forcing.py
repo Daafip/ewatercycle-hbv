@@ -13,10 +13,13 @@ from ewatercycle.base.forcing import DefaultForcing
 
 
 RENAME_CAMELS = {'total_precipitation_sum':'pr',
-                      'potential_evaporation_sum':'pev',
-                      'streamflow':'Q'}
+                 'potential_evaporation_sum':'pev',
+                 'streamflow':'Q',
+                 'temperature_2m_min':'tasmin',
+                 'temperature_2m_max':'tasmax',
+                 }
 
-REQUIRED_PARAMS = ["pr", "pev"]
+REQUIRED_PARAMS = ["pr", "pev", "tasmean"]
 class HBVForcing(DefaultForcing):
     """Container for HBV forcing data.
 
@@ -71,6 +74,7 @@ class HBVForcing(DefaultForcing):
     # or pr and pev are supplied seperately - can also be the same dataset
     pr: Optional[str] = ".nc"
     pev: Optional[str] = ".nc"
+    tasmean: Optional[str] = ".nc"
     alpha: Optional[float] = 1.26 # varies per catchment, mostly 1.26?
     test_data_bool: bool = False # allows to use self.from_test_txt()
 
@@ -111,6 +115,9 @@ class HBVForcing(DefaultForcing):
         df_in.index = df_in.apply(lambda x: pd.Timestamp(f'{int(x.year)}-{int(x.month)}-{int(x.day)}'), axis=1)
         df_in = df_in.drop(columns=["year", "month", "day"])
         df_in.index.name = "time"
+        # test data has no snow but let's add in synthetic temperatures to ensure there's no snow:
+        df_in['tasmean'] = 25
+
         # TODO use netcdf-cf conventions
         ds = xr.Dataset(data_vars=df_in,
                         attrs={
@@ -121,6 +128,8 @@ class HBVForcing(DefaultForcing):
         ds, ds_name = self.crop_ds(ds, "test")
         self.pev = ds_name
         self.pr = ds_name
+        self.tasmean = ds_name
+
         return ds
 
     def from_camels_txt(self) -> xr.Dataset:
@@ -183,7 +192,8 @@ class HBVForcing(DefaultForcing):
         # add attributes
         attrs = {"title": "HBV forcing data",
                  "history": "Created by ewatercycle_HBV.forcing.HBVForcing.from_camels_txt()",
-                 "units": "daylight(s), precipitation(mm/day), mean radiation(W/m2), snow water equivalen(mm), temperature max(C), temperature min(C), vapour pressure(Pa)", }
+                 "units": "daylight(s), precipitation(mm/day), mean radiation(W/m2), snow water equivalen(mm), temperature max(C), temperature min(C), temperature mean(c),vapour pressure(Pa)",
+                 }
 
         # add the data lines with catchment characteristics to the description
         attrs.update(data)
@@ -200,9 +210,11 @@ class HBVForcing(DefaultForcing):
                              ds.attrs['elevation(m)'],
                              ds.attrs['lat']
                              )
+        ds['tasmean'] = (ds["tasmin"] + ds["tasmax"]) / 2
         ds, ds_name= self.crop_ds(ds, "CAMELS")
         self.pev = ds_name
         self.pr = ds_name
+        self.tasmean = ds_name
         return ds
 
     def from_external_source(self):
@@ -211,24 +223,28 @@ class HBVForcing(DefaultForcing):
             self.file_not_found_error()
 
         # often same file
-        if self.pr == self.pev:
+        if self.pr == self.pev == self.tasmean:
             ds = xr.open_dataset(self.directory / self.pr)
 
+            # make compatile with CARAVAN data style:
             if sum([key in ds.data_vars for key in RENAME_CAMELS.keys()]) == len(RENAME_CAMELS):
                 ds = ds.rename(RENAME_CAMELS)
                 ds = ds.rename_dims({'date': 'time'})
                 ds = ds.rename({'date': 'time'})
+                ds['tasmean'] = (ds["tasmin"] + ds["tasmax"]) / 2
 
             ds, ds_name = self.crop_ds(ds, "external")
             self.pev = ds_name
             self.pr = ds_name
+            self.tasmean = ds_name
             return ds
 
         else:
             # but can also seperate
             ds_pr = xr.open_dataset(self.directory / self.pr)
             ds_pev = xr.open_dataset(self.directory / self.pev)
-            combined_data_vars = list(ds_pr.data_vars) + list(ds_pev.data_vars)
+            ds_tasmean = xr.open_dataset(self.directory / self.tasmean)
+            combined_data_vars = list(ds_pr.data_vars) + list(ds_pev.data_vars) + list(ds_tasmean.data_vars)
             if sum([param in combined_data_vars for param in REQUIRED_PARAMS]) != len(REQUIRED_PARAMS):
                 raise UserWarning(f"Supplied NetCDF files must contain {REQUIRED_PARAMS} respectively")
 
@@ -238,7 +254,10 @@ class HBVForcing(DefaultForcing):
             ds_pev, ds_name_pev = self.crop_ds(ds_pev, "external")
             self.pev = ds_name_pev
 
-            return ds_pr, ds_pev
+            ds_tasmean, ds_name_tasmean = self.crop_ds(ds_tasmean, "external")
+            self.tasmean = ds_name_tasmean
+
+            return ds_pr, ds_pev, ds_tasmean
 
     def crop_ds(self, ds: xr.Dataset, name: str):
         start = np.datetime64(self.start_time)

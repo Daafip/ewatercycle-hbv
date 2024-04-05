@@ -36,3 +36,5 @@ Adding `.finalize()` method - clears up the directory. Especially useful for DA.
   - now compatible with ewatercycle V2.1 `LumpedMakkinkForcing` which generates evaporation from era5/CMIP.
 #### 1.6.1
   - bug fix occuring when loading makkink data
+### 1.7.0
+  - new version of HBV bmi which adds snow 
