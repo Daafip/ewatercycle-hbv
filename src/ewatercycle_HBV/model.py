@@ -100,7 +100,7 @@ class HBVMethods(eWaterCycleModel):
                 ds.close()
 
             temporary_tasmean_file = self.forcing.directory / self.forcing.filenames['tas'].replace('tas', 'tasmean')
-            if not temporary_pr_file.is_file():
+            if not temporary_tasmean_file.is_file():
                 ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['tas'])
                 attributes = ds['tas'].attrs
                 ds['tasmean'] = ds['tas']
