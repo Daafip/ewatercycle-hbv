@@ -23,13 +23,15 @@ HBV_PARAMS = (
     "Tlag",
     "Kf",
     "Ks",
+    "FM",
 )
 
 HBV_STATES = (
     "Si",
     "Su",
     "Sf",
-    "Ss"
+    "Ss",
+    "Sp",
 )
 
 class HBVMethods(eWaterCycleModel):
@@ -229,5 +231,5 @@ class HBVMethods(eWaterCycleModel):
 class HBV(ContainerizedModel, HBVMethods):
     """The HBV eWaterCycle model, with the Container Registry docker image."""
     bmi_image: ContainerImage = ContainerImage(
-        "ghcr.io/daafip/hbv-bmi-grpc4bmi:v1.4.0"
+        "ghcr.io/daafip/hbv-bmi-grpc4bmi:v1.4.1"
     )
