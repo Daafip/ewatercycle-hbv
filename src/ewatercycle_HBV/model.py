@@ -43,6 +43,7 @@ class HBVMethods(eWaterCycleModel):
     _config: dict = {
         "precipitation_file": "",
         "potential_evaporation_file": "",
+        "mean_temperature_file": "",
         "parameters": "",
         "initial_storage": "",
                         }
@@ -68,6 +69,9 @@ class HBVMethods(eWaterCycleModel):
             self._config["potential_evaporation_file"] = str(
                 self.forcing.directory / self.forcing.pev
             )
+            self._config["mean_temperature_file"] = str(
+                self.forcing.directory / self.forcing.tasmean)
+
 
         elif type(self.forcing).__name__ == 'GenericLumpedForcing':
                 raise UserWarning("Generic Lumped Forcing does not provide potential evaporation, which this model needs")
@@ -95,6 +99,17 @@ class HBVMethods(eWaterCycleModel):
                 ds.to_netcdf(temporary_pr_file)
                 ds.close()
 
+            temporary_tasmean_file = self.forcing.directory / self.forcing.filenames['tas'].replace('tas', 'tasmean')
+            if not temporary_tasmean_file.is_file():
+                ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['tas'])
+                attributes = ds['tas'].attrs
+                ds['tasmean'] = ds['tas']
+                if ds['tasmean'].mean().values > 200: # adjust for kelvin units
+                    ds['tasmean'] -= 273.15
+                ds['tasmean'].attrs = attributes
+                ds.to_netcdf(temporary_tasmean_file)
+                ds.close()
+
             self._config["precipitation_file"] = str(
                 temporary_pr_file
             )
@@ -102,16 +117,9 @@ class HBVMethods(eWaterCycleModel):
                 temporary_pev_file
             )
 
-        ## possibly add later for snow?
-        # self._config["temperature_file"] = str(
-        #     self.forcing.directory / self.forcing.tas
-        # )
-        # self._config["temperature_min_file"] = str(
-        #     self.forcing.directory / self.forcing.tasmin
-        # )
-        # self._config["temperature_max_file"] = str(
-        #     self.forcing.directory / self.forcing.tasmax
-        # )
+            self._config["mean_temperature_file"] = str(
+                temporary_tasmean_file
+            )
 
         for kwarg in kwargs:  # Write any kwargs to the config. - doesn't overwrite config?
             self._config[kwarg] = kwargs[kwarg]
@@ -153,6 +161,8 @@ class HBVMethods(eWaterCycleModel):
 
             Ks (−): Similarly the slow flow is also modelled as 𝑄𝑆=𝐾𝑠∗𝑆𝑆.
 
+            FM (mm/deg/d): Melt Factor: mm of melt per deg per day
+
         """
         pars: dict[str, Any] = dict(zip(HBV_PARAMS, self._config["parameters"].split(',')))
         return pars.items()
@@ -166,6 +176,7 @@ class HBVMethods(eWaterCycleModel):
             Su (mm): Unsaturated rootzone storage, water stored accessible to plants
             Sf (mm): Fastflow storage, moving Fast through the soil - preferential flow paths, upper level
             Ss (mm): Groundwater storage, moving Slowly through the soil - deeper grounds water.
+            Sp (mm): SnowPack Storage, amount of snow stored
 
         """
         pars: dict[str, Any] = dict(zip(HBV_STATES, self._config["initial_storage"].split(',')))
@@ -207,7 +218,7 @@ class HBVMethods(eWaterCycleModel):
             self.unlink()
 
     def unlink(self):
-        for file in ["potential_evaporation_file", "precipitation_file"]:
+        for file in ["potential_evaporation_file", "precipitation_file","mean_temperature_file"]:
             path = self.forcing.directory / self._config[file]
             if path.is_file():  # often both with be the same, e.g. with camels data.
                 path.unlink()
@@ -217,5 +228,5 @@ class HBVMethods(eWaterCycleModel):
 class HBV(ContainerizedModel, HBVMethods):
     """The HBV eWaterCycle model, with the Container Registry docker image."""
     bmi_image: ContainerImage = ContainerImage(
-        "ghcr.io/daafip/hbv-bmi-grpc4bmi:v1.3.2"
+        "ghcr.io/daafip/hbv-bmi-grpc4bmi:v1.4.0"
     )
