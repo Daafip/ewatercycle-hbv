@@ -38,3 +38,5 @@ Adding `.finalize()` method - clears up the directory. Especially useful for DA.
   - bug fix occuring when loading makkink data
 ### 1.7.0
   - new version of HBV bmi which adds snow 
+### 1.7.1
+  - bug fix with definitions of state variable names

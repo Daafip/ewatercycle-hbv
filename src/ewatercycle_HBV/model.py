@@ -23,13 +23,15 @@ HBV_PARAMS = (
     "Tlag",
     "Kf",
     "Ks",
+    "FM",
 )
 
 HBV_STATES = (
     "Si",
     "Su",
     "Sf",
-    "Ss"
+    "Ss",
+    "Sp",
 )
 
 class HBVMethods(eWaterCycleModel):
@@ -106,6 +108,7 @@ class HBVMethods(eWaterCycleModel):
                 ds['tasmean'] = ds['tas']
                 if ds['tasmean'].mean().values > 200: # adjust for kelvin units
                     ds['tasmean'] -= 273.15
+                    attributes.update({'units':'degC'})
                 ds['tasmean'].attrs = attributes
                 ds.to_netcdf(temporary_tasmean_file)
                 ds.close()
@@ -228,5 +231,5 @@ class HBVMethods(eWaterCycleModel):
 class HBV(ContainerizedModel, HBVMethods):
     """The HBV eWaterCycle model, with the Container Registry docker image."""
     bmi_image: ContainerImage = ContainerImage(
-        "ghcr.io/daafip/hbv-bmi-grpc4bmi:v1.4.0"
+        "ghcr.io/daafip/hbv-bmi-grpc4bmi:v1.4.1"
     )
