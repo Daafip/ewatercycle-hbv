@@ -106,6 +106,7 @@ class HBVMethods(eWaterCycleModel):
                 ds['tasmean'] = ds['tas']
                 if ds['tasmean'].mean().values > 200: # adjust for kelvin units
                     ds['tasmean'] -= 273.15
+                    attributes.update({'units':'degC'})
                 ds['tasmean'].attrs = attributes
                 ds.to_netcdf(temporary_tasmean_file)
                 ds.close()
