@@ -104,6 +104,8 @@ class HBVMethods(eWaterCycleModel):
                 ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['tas'])
                 attributes = ds['tas'].attrs
                 ds['tasmean'] = ds['tas']
+                if ds['tasmean'].mean().values > 200: # adjust for kelvin units
+                    ds['tasmean'] -= 273.15
                 ds['tasmean'].attrs = attributes
                 ds.to_netcdf(temporary_tasmean_file)
                 ds.close()
