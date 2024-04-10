@@ -72,7 +72,7 @@ class HBVMethods(eWaterCycleModel):
                 self.forcing.directory / self.forcing.pev
             )
             self._config["mean_temperature_file"] = str(
-                self.forcing.directory / self.forcing.tasmean)
+                self.forcing.directory / self.forcing.tas)
 
 
         elif type(self.forcing).__name__ == 'GenericLumpedForcing':
@@ -80,37 +80,30 @@ class HBVMethods(eWaterCycleModel):
 
         elif type(self.forcing).__name__ == 'LumpedMakkinkForcing':
             temporary_pev_file = self.forcing.directory / self.forcing.filenames['evspsblpot'].replace('evspsblpot',
-                                                                                                       'pev_mm')
+                                                                                                       'evspsblpot_mm')
             if not temporary_pev_file.is_file():
                 ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['evspsblpot'])
-                attributes = ds['evspsblpot'].attrs
-                attributes['units'] = 'mm'
-                ds = ds.rename({'evspsblpot': 'pev'})
-                ds['pev'] = ds['pev'] * 86400
-                ds['pev'].attrs = attributes
+                ds['evspsblpot'].attrs.update({'units':'mm'})
+                ds['evspsblpot'] = ds['evspsblpot'] * 86400
                 ds.to_netcdf(temporary_pev_file)
                 ds.close()
 
             temporary_pr_file = self.forcing.directory / self.forcing.filenames['pr'].replace('pr', 'pr_mm')
             if not temporary_pr_file.is_file():
                 ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['pr'])
-                attributes = ds['pr'].attrs
-                attributes['units'] = 'mm'
+                ds['pr'].attrs.attrs.update({'units':'mm'})
                 ds['pr'] = ds['pr'] * 86400
-                ds['pr'].attrs = attributes
                 ds.to_netcdf(temporary_pr_file)
                 ds.close()
 
-            temporary_tasmean_file = self.forcing.directory / self.forcing.filenames['tas'].replace('tas', 'tasmean')
-            if not temporary_tasmean_file.is_file():
+            temporary_tas_file = self.forcing.directory / self.forcing.filenames['tas'].replace('tas', 'tas_deg')
+            if not temporary_tas_file.is_file():
                 ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['tas'])
-                attributes = ds['tas'].attrs
-                ds['tasmean'] = ds['tas']
-                if ds['tasmean'].mean().values > 200: # adjust for kelvin units
-                    ds['tasmean'] -= 273.15
-                    attributes.update({'units':'degC'})
-                ds['tasmean'].attrs = attributes
-                ds.to_netcdf(temporary_tasmean_file)
+                ds['tas'] = ds['tas']
+                if ds['tas'].mean().values > 200: # adjust for kelvin units
+                    ds['tas'] -= 273.15
+                    ds['tas'].attrs.update({'units':'degC'})
+                ds.to_netcdf(temporary_tas_file)
                 ds.close()
 
             self._config["precipitation_file"] = str(
@@ -121,7 +114,7 @@ class HBVMethods(eWaterCycleModel):
             )
 
             self._config["mean_temperature_file"] = str(
-                temporary_tasmean_file
+                temporary_tas_file
             )
 
         for kwarg in kwargs:  # Write any kwargs to the config. - doesn't overwrite config?
@@ -198,9 +191,9 @@ class HBVMethods(eWaterCycleModel):
         self._bmi.finalize()
         del self._bmi
 
+        config_file = self._cfg_dir / "HBV_config.json"
         try:
             # remove config file
-            config_file = self._cfg_dir / "HBV_config.json"
             config_file.unlink()
         except FileNotFoundError:
             warnings.warn(message=f'Config not found at {config_file}, removed by user?',category=UserWarning)
@@ -231,5 +224,5 @@ class HBVMethods(eWaterCycleModel):
 class HBV(ContainerizedModel, HBVMethods):
     """The HBV eWaterCycle model, with the Container Registry docker image."""
     bmi_image: ContainerImage = ContainerImage(
-        "ghcr.io/daafip/hbv-bmi-grpc4bmi:v1.4.1"
+        "ghcr.io/daafip/hbv-bmi-grpc4bmi:v1.5.0"
     )

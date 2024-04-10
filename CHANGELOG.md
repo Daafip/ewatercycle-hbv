@@ -40,3 +40,5 @@ Adding `.finalize()` method - clears up the directory. Especially useful for DA.
   - new version of HBV bmi which adds snow 
 ### 1.7.1
   - bug fix with definitions of state variable names
+### 1.8.0
+- Refactor potential evaporation from `pev` to `evspsblpot` & `tasmean` to `tas` to match convention
