@@ -69,7 +69,7 @@ class HBVMethods(eWaterCycleModel):
             )
 
             self._config["potential_evaporation_file"] = str(
-                self.forcing.directory / self.forcing.pev
+                self.forcing.directory / self.forcing.evspsblpot
             )
             self._config["mean_temperature_file"] = str(
                 self.forcing.directory / self.forcing.tas)
@@ -79,13 +79,13 @@ class HBVMethods(eWaterCycleModel):
                 raise UserWarning("Generic Lumped Forcing does not provide potential evaporation, which this model needs")
 
         elif type(self.forcing).__name__ == 'LumpedMakkinkForcing':
-            temporary_pev_file = self.forcing.directory / self.forcing.filenames['evspsblpot'].replace('evspsblpot',
+            temporary_evspsblpot_file = self.forcing.directory / self.forcing.filenames['evspsblpot'].replace('evspsblpot',
                                                                                                        'evspsblpot_mm')
-            if not temporary_pev_file.is_file():
+            if not temporary_evspsblpot_file.is_file():
                 ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['evspsblpot'])
                 ds['evspsblpot'].attrs.update({'units':'mm'})
                 ds['evspsblpot'] = ds['evspsblpot'] * 86400
-                ds.to_netcdf(temporary_pev_file)
+                ds.to_netcdf(temporary_evspsblpot_file)
                 ds.close()
 
             temporary_pr_file = self.forcing.directory / self.forcing.filenames['pr'].replace('pr', 'pr_mm')
@@ -110,7 +110,7 @@ class HBVMethods(eWaterCycleModel):
                 temporary_pr_file
             )
             self._config["potential_evaporation_file"] = str(
-                temporary_pev_file
+                temporary_evspsblpot_file
             )
 
             self._config["mean_temperature_file"] = str(
