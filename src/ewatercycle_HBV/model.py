@@ -76,15 +76,16 @@ class HBVMethods(eWaterCycleModel):
 
         elif type(self.forcing).__name__ == 'LumpedCaravanForcing':
             self._config["precipitation_file"] = str(
-                self.forcing.directory / self.forcing.pr
+                self.forcing.directory / self.forcing['pr']
             )
 
             self._config["potential_evaporation_file"] = str(
-                self.forcing.directory / self.forcing.evspsblpot
+                self.forcing.directory / self.forcing['evspsblpot']
             )
 
             self._config["mean_temperature_file"] = str(
-                self.forcing.directory / self.forcing.tas)
+                self.forcing.directory / self.forcing['tas']
+            )
 
         elif type(self.forcing).__name__ == 'GenericLumpedForcing':
                 msg = "Generic Lumped Forcing does not provide potential evaporation, which this model needs"
