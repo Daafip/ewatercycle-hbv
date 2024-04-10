@@ -74,21 +74,36 @@ class HBVMethods(eWaterCycleModel):
             self._config["mean_temperature_file"] = str(
                 self.forcing.directory / self.forcing.tas)
 
+        elif type(self.forcing).__name__ == 'LumpedCaravanForcing':
+            self._config["precipitation_file"] = str(
+                self.forcing.directory / self.forcing.pr
+            )
+
+            self._config["potential_evaporation_file"] = str(
+                self.forcing.directory / self.forcing.evspsblpot
+            )
+
+            self._config["mean_temperature_file"] = str(
+                self.forcing.directory / self.forcing.tas)
 
         elif type(self.forcing).__name__ == 'GenericLumpedForcing':
-                raise UserWarning("Generic Lumped Forcing does not provide potential evaporation, which this model needs")
+                msg = "Generic Lumped Forcing does not provide potential evaporation, which this model needs"
+                raise UserWarning(msg)
 
         elif type(self.forcing).__name__ == 'LumpedMakkinkForcing':
-            temporary_evspsblpot_file = self.forcing.directory / self.forcing.filenames['evspsblpot'].replace('evspsblpot',
-                                                                                                       'evspsblpot_mm')
+            temporary_evspsblpot_file = (self.forcing.directory /
+                                         self.forcing.filenames['evspsblpot'].replace('evspsblpot',
+                                                                                  'evspsblpot_mm'))
             if not temporary_evspsblpot_file.is_file():
-                ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['evspsblpot'])
+                ds = xr.open_dataset(self.forcing.directory /
+                                     self.forcing.filenames['evspsblpot'])
                 ds['evspsblpot'].attrs.update({'units':'mm'})
                 ds['evspsblpot'] = ds['evspsblpot'] * 86400
                 ds.to_netcdf(temporary_evspsblpot_file)
                 ds.close()
 
-            temporary_pr_file = self.forcing.directory / self.forcing.filenames['pr'].replace('pr', 'pr_mm')
+            temporary_pr_file = (self.forcing.directory /
+                                 self.forcing.filenames['pr'].replace('pr', 'pr_mm'))
             if not temporary_pr_file.is_file():
                 ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['pr'])
                 ds['pr'].attrs.attrs.update({'units':'mm'})
@@ -96,7 +111,8 @@ class HBVMethods(eWaterCycleModel):
                 ds.to_netcdf(temporary_pr_file)
                 ds.close()
 
-            temporary_tas_file = self.forcing.directory / self.forcing.filenames['tas'].replace('tas', 'tas_deg')
+            temporary_tas_file = (self.forcing.directory /
+                                  self.forcing.filenames['tas'].replace('tas', 'tas_deg'))
             if not temporary_tas_file.is_file():
                 ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['tas'])
                 ds['tas'] = ds['tas']
@@ -124,7 +140,6 @@ class HBVMethods(eWaterCycleModel):
 
         with config_file.open(mode="w") as f:
             f.write(json.dumps(self._config, indent=4))
-
 
         return config_file
 
