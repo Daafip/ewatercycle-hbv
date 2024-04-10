@@ -116,7 +116,6 @@ class HBVMethods(eWaterCycleModel):
                                   self.forcing.filenames['tas'].replace('tas', 'tas_deg'))
             if not temporary_tas_file.is_file():
                 ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['tas'])
-                ds['tas'] = ds['tas']
                 if ds['tas'].mean().values > 200: # adjust for kelvin units
                     ds['tas'] -= 273.15
                     ds['tas'].attrs.update({'units':'degC'})
