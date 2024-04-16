@@ -199,42 +199,13 @@ class HBVMethods(eWaterCycleModel):
 
         After finalization, the model should not be used anymore.
 
-        ADDED: Remove created config files, especially useful for DA models
         """
 
         # remove bmi
         self._bmi.finalize()
         del self._bmi
 
-        config_file = self._cfg_dir / "HBV_config.json"
-        try:
-            # remove config file
-            config_file.unlink()
-        except FileNotFoundError:
-            warnings.warn(message=f'Config not found at {config_file}, removed by user?',category=UserWarning)
 
-        try:
-            # once empty, remove it
-            self._cfg_dir.rmdir()
-        except FileNotFoundError:
-            warnings.warn(message=f'Config folder not found at {self._cfg_dir.rmdir()}',category=UserWarning)
-
-        if type(self.forcing).__name__ == 'HBVForcing':
-            # NetCDF files created are timestamped and running them a lot creates many files, remove these
-            if self.forcing.camels_txt_defined() or self.forcing.test_data_bool:
-                self.unlink()
-
-        elif type(self.forcing).__name__ == 'LumpedMakkinkForcing':
-            # we created a temporary file so let's unlink that
-            self.unlink()
-
-    def unlink(self):
-        for file in ["potential_evaporation_file", "precipitation_file","mean_temperature_file"]:
-            path = self.forcing.directory / self._config[file]
-            if path.is_file():  # often both with be the same, e.g. with camels data.
-                path.unlink()
-            else:
-                pass
 
 class HBV(ContainerizedModel, HBVMethods):
     """The HBV eWaterCycle model, with the Container Registry docker image."""
