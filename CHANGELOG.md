@@ -38,7 +38,9 @@ Adding `.finalize()` method - clears up the directory. Especially useful for DA.
   - bug fix occuring when loading makkink data
 ### 1.7.0
   - new version of HBV bmi which adds snow 
-### 1.7.1
+#### 1.7.1
   - bug fix with definitions of state variable names
 ### 1.8.0
 - Refactor potential evaporation from `pev` to `evspsblpot` & `tasmean` to `tas` to match convention
+#### 1.8.1
+- Rename `LumpedCamelsForcing` to `CamelsForcing`

@@ -74,7 +74,7 @@ class HBVMethods(eWaterCycleModel):
             self._config["mean_temperature_file"] = str(
                 self.forcing.directory / self.forcing.tas)
 
-        elif type(self.forcing).__name__ == 'LumpedCaravanForcing':
+        elif type(self.forcing).__name__ == 'CaravanForcing':
             self._config["precipitation_file"] = str(
                 self.forcing.directory / self.forcing['pr']
             )
@@ -107,7 +107,7 @@ class HBVMethods(eWaterCycleModel):
                                  self.forcing.filenames['pr'].replace('pr', 'pr_mm'))
             if not temporary_pr_file.is_file():
                 ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['pr'])
-                ds['pr'].attrs.attrs.update({'units':'mm'})
+                ds['pr'].attrs.update({'units':'mm'})
                 ds['pr'] = ds['pr'] * 86400
                 ds.to_netcdf(temporary_pr_file)
                 ds.close()
