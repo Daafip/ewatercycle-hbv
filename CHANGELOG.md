@@ -44,3 +44,5 @@ Adding `.finalize()` method - clears up the directory. Especially useful for DA.
 - Refactor potential evaporation from `pev` to `evspsblpot` & `tasmean` to `tas` to match convention
 #### 1.8.1
 - Rename `LumpedCamelsForcing` to `CamelsForcing`
+#### 1.8.2
+- No longer removes config on `finalize`, should be up to user
