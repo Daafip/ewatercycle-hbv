@@ -228,5 +228,4 @@ class HBV(ContainerizedModel, HBVMethods):
 
 class HBVLocal(LocalModel, HBVMethods):
     """The HBV eWaterCycle model, with the local BMI."""
-    HBV_bmi: "<class 'HBV.HBV_bmi.HBV'>" = import_bmi()
-    bmi_class: Type[Bmi] = HBV_bmi
+    bmi_class: Type[Bmi] = import_bmi()
