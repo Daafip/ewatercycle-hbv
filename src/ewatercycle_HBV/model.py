@@ -11,8 +11,24 @@ from ewatercycle.forcing import LumpedMakkinkForcing
 from ewatercycle.forcing import GenericLumpedForcing
 
 from ewatercycle_HBV.forcing import HBVForcing # Use custom forcing instead
-from ewatercycle.base.model import ContainerizedModel, eWaterCycleModel
+from ewatercycle.base.model import (
+    ContainerizedModel,
+    eWaterCycleModel,
+    LocalModel,
+    )
 from ewatercycle.container import ContainerImage
+from bmipy import Bmi
+def import_bmi():
+    """"Import BMI, raise useful exception if not found"""
+    try:
+        from HBV import HBV as HBV_bmi
+    except ModuleNotFoundError:
+        msg = (
+            "HBV bmi package not found, install using: `pip install HBV`"
+        )
+        raise ModuleNotFoundError(msg)
+
+    return HBV_bmi
 
 HBV_PARAMS = (
     "Imax",
@@ -198,13 +214,10 @@ class HBVMethods(eWaterCycleModel):
         """Perform tear-down tasks for the model.
 
         After finalization, the model should not be used anymore.
-
         """
-
         # remove bmi
         self._bmi.finalize()
         del self._bmi
-
 
 
 class HBV(ContainerizedModel, HBVMethods):
@@ -212,3 +225,8 @@ class HBV(ContainerizedModel, HBVMethods):
     bmi_image: ContainerImage = ContainerImage(
         "ghcr.io/daafip/hbv-bmi-grpc4bmi:v1.5.0"
     )
+
+class HBVLocal(LocalModel, HBVMethods):
+    """The HBV eWaterCycle model, with the local BMI."""
+    HBV_bmi = import_bmi()
+    bmi_class: Type[Bmi] = HBV_bmi
