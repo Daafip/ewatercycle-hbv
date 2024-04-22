@@ -46,3 +46,5 @@ Adding `.finalize()` method - clears up the directory. Especially useful for DA.
 - Rename `LumpedCamelsForcing` to `CamelsForcing`
 #### 1.8.2
 - No longer removes config on `finalize`, should be up to user
+#### 1.8.3
+- Local model: `HBVLocal` also availible in wrapper
