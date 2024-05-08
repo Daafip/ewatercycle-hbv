@@ -4,12 +4,15 @@
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
+import random
+import string
 
 import pandas as pd
 import xarray as xr
 import numpy as np
 
 from ewatercycle.base.forcing import DefaultForcing
+from ewatercycle.util import get_time
 
 
 RENAME_CAMELS = {'total_precipitation_sum':'pr',
@@ -260,13 +263,14 @@ class HBVForcing(DefaultForcing):
             return ds_pr, ds_evspsblpot, ds_tas
 
     def crop_ds(self, ds: xr.Dataset, name: str):
-        start = np.datetime64(self.start_time)
-        end = np.datetime64(self.end_time)
+        start = pd.Timestamp(get_time(self.start_time)).tz_convert(None)
+        end = pd.Timestamp(get_time(self.end_time)).tz_convert(None)
         ds = ds.isel(time=(ds['time'].values >= start) & (ds['time'].values <= end))
 
         time = str(datetime.now())[:-10].replace(":", "_")
-        # TODO maybe change this time aspect? can get quite large - or simply remove in finalize
-        ds_name = f"HBV_forcing_{name}_{time}.nc"
+        letters = string.ascii_lowercase + string.ascii_uppercase
+        unique_identifier = ''.join((random.choice(letters)) for _ in range(5))
+        ds_name = f"HBV_forcing_{name}_{time}_{unique_identifier}.nc"
         out_dir = self.directory / ds_name
         if not out_dir.exists():
             ds.to_netcdf(out_dir)
