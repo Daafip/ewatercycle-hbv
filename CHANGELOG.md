@@ -48,3 +48,5 @@ Adding `.finalize()` method - clears up the directory. Especially useful for DA.
 - No longer removes config on `finalize`, should be up to user
 #### 1.8.3
 - Local model: `HBVLocal` also availible in wrapper
+#### 1.8.4
+- On generation of forcing adds a unique id (string) to be able to generate a lot of forcing at once

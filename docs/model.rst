@@ -9,8 +9,10 @@ Model
 HBV (Hydrologiska Byråns Vattenbalansavdelning) is a conceptual
 hydrological model. For more information on it’s history, see this
 `paper <https://hess.copernicus.org/articles/26/1371/2022/>`__.
+The actual model implemented here sit looks most like the original model from `1976 <https://urn.kb.se/resolve?urn=urn:nbn:se:smhi:diva-573>`__.
 
-This current implementation is *without* a snow reservoir as shown in the diagram below.
+
+This current implementation is with a snow reservoir as shown in the diagram below.
 
 .. image:: _images/model_layout.png
    :width: 600
