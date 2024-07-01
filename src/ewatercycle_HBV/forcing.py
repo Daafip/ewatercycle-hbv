@@ -4,7 +4,7 @@
 from datetime import datetime
 from pathlib import Path
 from typing import Optional
-import random
+import secrets
 import string
 
 import pandas as pd
@@ -24,7 +24,7 @@ RENAME_CAMELS = {'total_precipitation_sum':'pr',
 
 REQUIRED_PARAMS = ["pr", "evspsblpot", "tas"]
 class HBVForcing(DefaultForcing):
-    """Container for HBV forcing data.
+    """Class for HBV forcing data, mainly focused on using CAMELS dataset.
 
     Args:
         camels_file: .txt file that contains CAMELS forcing from https://hess.copernicus.org/articles/21/5293/2017/
@@ -136,7 +136,16 @@ class HBVForcing(DefaultForcing):
         return ds
 
     def from_camels_txt(self) -> xr.Dataset:
-        """Load forcing data from a txt file into an xarray dataset.
+        """Load forcing data from a txt file into a xarray dataset.
+
+        Note:
+            This is only tested with the daymet files.
+            The other two sources (NLDAS/maurer) can pose some issues, for more details
+            see this repo `<https://github.com/Daafip/CAMELS-to-netcdf/blob/218a5c6c17472d1b59630ee4a1000c3cb8fafcd0/read_camels.py#L56>`_ .
+            Instead, use the
+            `eWaterCycle CAMELS functionality <https://github.com/eWaterCycle/ewatercycle/pull/407>`_
+            which utilises
+            `OpenDAP <https://doi.org/10.4121/ca13056c-c347-4a27-b320-930c2a4dd207>`_ .
 
         Requirements:
             Must be in the same format as the CAMELS dataset:
@@ -269,7 +278,7 @@ class HBVForcing(DefaultForcing):
 
         time = str(datetime.now())[:-10].replace(":", "_")
         letters = string.ascii_lowercase + string.ascii_uppercase
-        unique_identifier = ''.join((random.choice(letters)) for _ in range(5))
+        unique_identifier = ''.join((secrets.choice(letters)) for _ in range(5))
         ds_name = f"HBV_forcing_{name}_{time}_{unique_identifier}.nc"
         out_dir = self.directory / ds_name
         if not out_dir.exists():
