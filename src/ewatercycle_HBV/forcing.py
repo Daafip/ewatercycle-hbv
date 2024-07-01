@@ -141,7 +141,7 @@ class HBVForcing(DefaultForcing):
         Note:
             This is only tested with the daymet files.
             The other two sources (NLDAS/maurer) can pose some issues, for more details
-            see this repo `<https://github.com/Daafip/CAMELS-to-netcdf/blob/218a5c6c17472d1b59630ee4a1000c3cb8fafcd0/read_camels.py#L56>`_ .
+            see `this repo <https://github.com/Daafip/CAMELS-to-netcdf/blob/218a5c6c17472d1b59630ee4a1000c3cb8fafcd0/read_camels.py#L56>`_ .
             Instead, use the
             `eWaterCycle CAMELS functionality <https://github.com/eWaterCycle/ewatercycle/pull/407>`_
             which utilises
