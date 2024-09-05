@@ -50,3 +50,5 @@ Adding `.finalize()` method - clears up the directory. Especially useful for DA.
 - Local model: `HBVLocal` also availible in wrapper
 #### 1.8.4
 - On generation of forcing adds a unique id (string) to be able to generate a lot of forcing at once
+#### 1.8.5
+- Removed the LocalHBV entrypoints (breaks ewatercycle). Import it like this instead: `from ewatercycle_hbv.model import HBVLocal`
