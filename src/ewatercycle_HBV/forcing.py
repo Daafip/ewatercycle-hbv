@@ -23,6 +23,8 @@ RENAME_CAMELS = {'total_precipitation_sum':'pr',
                  }
 
 REQUIRED_PARAMS = ["pr", "evspsblpot", "tas"]
+
+
 class HBVForcing(DefaultForcing):
     """Class for HBV forcing data, mainly focused on using CAMELS dataset.
 
