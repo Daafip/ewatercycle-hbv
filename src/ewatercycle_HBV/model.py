@@ -68,15 +68,41 @@ class HBVMethods(eWaterCycleModel):
         "mean_temperature_file": "",
         "parameters": "",
         "initial_storage": "",
-                        }
+    }
 
     def _make_cfg_file(self, **kwargs) -> Path:
         """Write model configuration file."""
 
+        # Validate forcing and update _config with the forcing file paths:
         validate_forcing(self)
 
-        for kwarg in kwargs:  # Write any kwargs to the config. - doesn't overwrite config?
-            self._config[kwarg] = kwargs[kwarg]
+        if "parameters" not in kwargs:
+            msg = (
+                "The model needs the parameters argument, consisting of 9 parameters;\n"
+                "   [Imax, Ce, Sumax, Beta, Pmax, Tlag, Kf, Ks, FM]"
+            )
+            raise ValueError(msg)
+
+        if  len(list(kwargs["parameters"])) != 9:
+            msg = (
+                "Incorrect number of parameters provided."
+            )
+            raise ValueError(msg)
+
+        self._config["parameters"] = list(kwargs["parameters"])
+
+        if "initial_storage" in kwargs:
+            if len(list(kwargs["initial_storage"])) != 5:
+                msg = "The model needs 5 initial storage terms."
+                raise ValueError(msg)
+
+            self._config["initial_storage"] = list(kwargs["initial_storage"])
+        else:
+            self._config["initial_storage"] = [0, 0, 0, 0, 0]
+
+        # HBV does not expect a JSON array, but instead a comma separated string;
+        self._config["initial_storage"] = ",".join(str(el) for el in self._config["initial_storage"])
+        self._config["parameters"] = ",".join(str(el) for el in self._config["parameters"])
 
         config_file = self._cfg_dir / "HBV_config.json"
 
@@ -158,7 +184,7 @@ class HBVLocal(LocalModel, HBVMethods):
 
 
 def validate_forcing(model: HBVMethods):
-    """Validate the forcing input of the model.
+    """Validate the forcing input of the model, and update model._config with the paths.
 
     Checks if:
         - the forcing object is officially supported by this model. Warns if not.
@@ -199,9 +225,9 @@ def validate_forcing(model: HBVMethods):
             )
             raise ValueError(msg)
 
-    for var in ("pr", "tas", "evpsblpot"):
+    for var in ("pr", "tas", "evspsblpot"):
         if var not in model.forcing.filenames:
-            msg = f"{var} is a required input variable!"
+            msg = f"Incompatible forcing! {var} is a required input variable!"
             raise ValueError(msg)
 
     fnames = {}
@@ -212,14 +238,24 @@ def validate_forcing(model: HBVMethods):
     for var in ("pr", "evspsblpot", "tas"):
         ds = xr.open_dataset(fnames[var])
 
-        if hasattr(ds[var].attrs, "units"):  # Must have units attr to be able to check
-            if ds[var].attrs["units"] == "kg s-1 m-2":
-                ds[var].attrs.update({"units":"mm"})
-                ds[var] = ds[var] * 86400
-            if ds[var].attrs["units"] == "K":
-                ds[var].attrs.update({"units":"degC"})
-                ds[var] -= 273.15
+        ## CF-convention is 'units' not 'unit'
+        if "unit" in ds[var].attrs:
+            ds[var].attrs["units"] = ds[var].attrs.pop("unit")
 
+        converted = False
+        if "units" in ds[var].attrs:  # Must have units attr to be able to check
+            if ds[var].attrs["units"] in ["kg m-2 s-1", "kg s-1 m-2"]:
+                with xr.set_options(keep_attrs=True):
+                    ds[var] = ds[var] * 86400
+                ds[var].attrs.update({"units": "mm/d"})
+                converted = True
+            elif ds[var].attrs["units"] == "K":
+                with xr.set_options(keep_attrs=True):
+                    ds[var] -= 273.15
+                ds[var].attrs.update({"units": "degC"})
+                converted = True
+
+        if converted:
             tmp_file = (
                 model.forcing.directory /
                 model.forcing.filenames[var].replace(var, f"{var}_converted")

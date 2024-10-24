@@ -204,10 +204,11 @@ class HBVForcing(DefaultForcing):
         df.rename(columns=rename_dict2, inplace=True)
 
         # add attributes
-        attrs = {"title": "HBV forcing data",
-                 "history": "Created by ewatercycle_HBV.forcing.HBVForcing.from_camels_txt()",
-                 "units": "daylight(s), precipitation(mm/day), mean radiation(W/m2), snow water equivalen(mm), temperature max(C), temperature min(C), temperature mean(c),vapour pressure(Pa)",
-                 }
+        attrs = {
+            "title": "HBV forcing data",
+            "history": "Created by ewatercycle_HBV.forcing.HBVForcing.from_camels_txt()",
+            "units": "daylight(s), precipitation(mm/day), mean radiation(W/m2), snow water equivalen(mm), temperature max(C), temperature min(C), temperature mean(c),vapour pressure(Pa)",
+        }
 
         # add the data lines with catchment characteristics to the description
         attrs.update(data)
