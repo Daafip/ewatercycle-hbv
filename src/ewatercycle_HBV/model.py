@@ -1,8 +1,7 @@
 """eWaterCycle wrapper for the HBV model."""
 import json
-import xarray as xr
 import warnings
-import os
+import xarray as xr
 from collections.abc import ItemsView
 from pathlib import Path
 from typing import Any, Type
@@ -18,6 +17,8 @@ from ewatercycle.base.model import (
     )
 from ewatercycle.container import ContainerImage
 from bmipy import Bmi
+
+
 def import_bmi():
     """"Import BMI, raise useful exception if not found"""
     try:
@@ -29,6 +30,9 @@ def import_bmi():
         raise ModuleNotFoundError(msg)
 
     return HBV_bmi
+
+
+SUPPORTED_FORCINGS = ("HBVForcing", "CaravanForcing", "LumpedMakkinkForcing")
 
 HBV_PARAMS = (
     "Imax",
@@ -55,7 +59,7 @@ class HBVMethods(eWaterCycleModel):
     The eWatercycle HBV model.
     """
 
-    forcing: LumpedMakkinkForcing|HBVForcing|GenericLumpedForcing  # The model requires forcing.
+    forcing: LumpedMakkinkForcing | HBVForcing | GenericLumpedForcing
     parameter_set: None  # The model has no parameter set.
 
     _config: dict = {
@@ -64,93 +68,41 @@ class HBVMethods(eWaterCycleModel):
         "mean_temperature_file": "",
         "parameters": "",
         "initial_storage": "",
-                        }
+    }
 
     def _make_cfg_file(self, **kwargs) -> Path:
         """Write model configuration file."""
 
-        # do some basic test to check on forcing
-        if type(self.forcing).__name__ == 'HBVForcing':
-            if self.forcing.test_data_bool:
-                self.forcing.from_test_txt()
-            elif self.forcing.camels_txt_defined():
-                self.forcing.from_camels_txt()
-            elif self.forcing.forcing_nc_defined():
-                self.forcing.from_external_source()
-            else:
-                raise UserWarning("Ensure either a txt file with camels data or an(/set of) xarrays is defined")
+        # Validate forcing and update _config with the forcing file paths:
+        validate_forcing(self)
 
-            self._config["precipitation_file"] = str(
-                self.forcing.directory / self.forcing.pr
+        if "parameters" not in kwargs:
+            msg = (
+                "The model needs the parameters argument, consisting of 9 parameters;\n"
+                "   [Imax, Ce, Sumax, Beta, Pmax, Tlag, Kf, Ks, FM]"
             )
+            raise ValueError(msg)
 
-            self._config["potential_evaporation_file"] = str(
-                self.forcing.directory / self.forcing.evspsblpot
+        if  len(list(kwargs["parameters"])) != 9:
+            msg = (
+                "Incorrect number of parameters provided."
             )
-            self._config["mean_temperature_file"] = str(
-                self.forcing.directory / self.forcing.tas)
+            raise ValueError(msg)
 
-        elif type(self.forcing).__name__ == 'CaravanForcing':
-            self._config["precipitation_file"] = str(
-                self.forcing.directory / self.forcing['pr']
-            )
+        self._config["parameters"] = list(kwargs["parameters"])
 
-            self._config["potential_evaporation_file"] = str(
-                self.forcing.directory / self.forcing['evspsblpot']
-            )
+        if "initial_storage" in kwargs:
+            if len(list(kwargs["initial_storage"])) != 5:
+                msg = "The model needs 5 initial storage terms."
+                raise ValueError(msg)
 
-            self._config["mean_temperature_file"] = str(
-                self.forcing.directory / self.forcing['tas']
-            )
+            self._config["initial_storage"] = list(kwargs["initial_storage"])
+        else:
+            self._config["initial_storage"] = [0, 0, 0, 0, 0]
 
-        elif type(self.forcing).__name__ == 'GenericLumpedForcing':
-                msg = "Generic Lumped Forcing does not provide potential evaporation, which this model needs"
-                raise UserWarning(msg)
-
-        elif type(self.forcing).__name__ == 'LumpedMakkinkForcing':
-            temporary_evspsblpot_file = (self.forcing.directory /
-                                         self.forcing.filenames['evspsblpot'].replace('evspsblpot',
-                                                                                  'evspsblpot_mm'))
-            if not temporary_evspsblpot_file.is_file():
-                ds = xr.open_dataset(self.forcing.directory /
-                                     self.forcing.filenames['evspsblpot'])
-                ds['evspsblpot'].attrs.update({'units':'mm'})
-                ds['evspsblpot'] = ds['evspsblpot'] * 86400
-                ds.to_netcdf(temporary_evspsblpot_file)
-                ds.close()
-
-            temporary_pr_file = (self.forcing.directory /
-                                 self.forcing.filenames['pr'].replace('pr', 'pr_mm'))
-            if not temporary_pr_file.is_file():
-                ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['pr'])
-                ds['pr'].attrs.update({'units':'mm'})
-                ds['pr'] = ds['pr'] * 86400
-                ds.to_netcdf(temporary_pr_file)
-                ds.close()
-
-            temporary_tas_file = (self.forcing.directory /
-                                  self.forcing.filenames['tas'].replace('tas', 'tas_deg'))
-            if not temporary_tas_file.is_file():
-                ds = xr.open_dataset(self.forcing.directory / self.forcing.filenames['tas'])
-                if ds['tas'].mean().values > 200: # adjust for kelvin units
-                    ds['tas'] -= 273.15
-                    ds['tas'].attrs.update({'units':'degC'})
-                ds.to_netcdf(temporary_tas_file)
-                ds.close()
-
-            self._config["precipitation_file"] = str(
-                temporary_pr_file
-            )
-            self._config["potential_evaporation_file"] = str(
-                temporary_evspsblpot_file
-            )
-
-            self._config["mean_temperature_file"] = str(
-                temporary_tas_file
-            )
-
-        for kwarg in kwargs:  # Write any kwargs to the config. - doesn't overwrite config?
-            self._config[kwarg] = kwargs[kwarg]
+        # HBV does not expect a JSON array, but instead a comma separated string;
+        self._config["initial_storage"] = ",".join(str(el) for el in self._config["initial_storage"])
+        self._config["parameters"] = ",".join(str(el) for el in self._config["parameters"])
 
         config_file = self._cfg_dir / "HBV_config.json"
 
@@ -229,3 +181,90 @@ class HBV(ContainerizedModel, HBVMethods):
 class HBVLocal(LocalModel, HBVMethods):
     """The HBV eWaterCycle model, with the local BMI."""
     bmi_class: Type[Bmi] = import_bmi()
+
+
+def validate_forcing(model: HBVMethods):
+    """Validate the forcing input of the model, and update model._config with the paths.
+
+    Checks if:
+        - the forcing object is officially supported by this model. Warns if not.
+        - the user is trying to use GenericLumpedForcing. Raises error if they are.
+        - the forcing is HBVForcing, and if so, deals with the txt/nc files correctly
+        - the units are correct (if the data has attributes), and converts them it 
+            they are not correct.
+
+    Args:
+        model: HBV Model class
+
+    """
+    if type(model.forcing).__name__ not in SUPPORTED_FORCINGS:
+        msg = (
+            f"{type(model.forcing).__name__} is not supported by this model and "
+            "might not work!"
+        )
+        warnings.warn(msg)
+
+    if type(model.forcing).__name__ == 'GenericLumpedForcing':
+        msg = (
+            "Generic Lumped Forcing does not provide potential evaporation,"
+            " which this model needs"
+        )
+        raise ValueError(msg)
+
+    if isinstance(model.forcing, HBVForcing):
+        if model.forcing.test_data_bool:
+            model.forcing.from_test_txt()
+        elif model.forcing.camels_txt_defined():
+            model.forcing.from_camels_txt()
+        elif model.forcing.forcing_nc_defined():
+            model.forcing.from_external_source()
+        else:
+            msg = (
+                "Ensure either a txt file with camels data or an(/set of)"
+                " xarrays is defined"
+            )
+            raise ValueError(msg)
+
+    for var in ("pr", "tas", "evspsblpot"):
+        if var not in model.forcing.filenames:
+            msg = f"Incompatible forcing! {var} is a required input variable!"
+            raise ValueError(msg)
+
+    fnames = {}
+    fnames["pr"] = str(model.forcing.directory / model.forcing.filenames["pr"])
+    fnames["tas"] = str(model.forcing.directory / model.forcing.filenames["tas"])
+    fnames["evspsblpot"] = str(model.forcing.directory / model.forcing.filenames["evspsblpot"])
+
+    for var in ("pr", "evspsblpot", "tas"):
+        ds = xr.open_dataset(fnames[var])
+
+        ## CF-convention is 'units' not 'unit'
+        if "unit" in ds[var].attrs:
+            ds[var].attrs["units"] = ds[var].attrs.pop("unit")
+
+        converted = False
+        if "units" in ds[var].attrs:  # Must have units attr to be able to check
+            if ds[var].attrs["units"] in ["kg m-2 s-1", "kg s-1 m-2"]:
+                with xr.set_options(keep_attrs=True):
+                    ds[var] = ds[var] * 86400
+                ds[var].attrs.update({"units": "mm/d"})
+                converted = True
+            elif ds[var].attrs["units"] == "K":
+                with xr.set_options(keep_attrs=True):
+                    ds[var] -= 273.15
+                ds[var].attrs.update({"units": "degC"})
+                converted = True
+
+        if converted:
+            tmp_file = (
+                model.forcing.directory /
+                model.forcing.filenames[var].replace(var, f"{var}_converted")
+            )
+            ds.to_netcdf(tmp_file)
+            ds.close()
+            fnames[var] = str(tmp_file)
+
+    ## finally asign fnames (possibly with converted files)
+    model._config["precipitation_file"] = fnames["pr"]
+    model._config["potential_evaporation_file"] = fnames["evspsblpot"]
+    model._config["mean_temperature_file"] = fnames["tas"]
