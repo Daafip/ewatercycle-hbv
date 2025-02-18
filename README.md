@@ -1,5 +1,9 @@
 # eWaterCycle plugin - HBV
 
+> [!IMPORTANT]
+> This repo has been moved to the [official eWaterCycle Github](https://github.com/eWaterCycle/ewatercycle-hbv)
+
+
 [![Python package](https://github.com/Daafip/ewatercycle-hbv/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/Daafip/ewatercycle-hbv/actions/workflows/test.yml)
 [![docs badge](https://readthedocs.org/projects/ewatercycle-hbv/badge/?version=latest)](https://ewatercycle-hbv.readthedocs.io/en/latest/index.html)
 [![PyPI](https://img.shields.io/pypi/v/ewatercycle-HBV)](https://pypi.org/project/ewatercycle-HBV/)
